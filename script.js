@@ -3,8 +3,10 @@ window.addEventListener("scroll", function () {
     const docHeight = document.body.scrollHeight - window.innerHeight;
     const scrollFraction = scrollTop / docHeight;
 
-    const maxHeight = window.innerHeight;
     const line = document.getElementById("line");
+
+    const margin = 20; // same as CSS margin
+    const maxHeight = window.innerHeight - 2 * margin;
 
     line.style.height = (scrollFraction * maxHeight) + "px";
 });
