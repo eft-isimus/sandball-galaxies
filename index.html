@@ -121,6 +121,50 @@
 <p>
     
 </p>
+    
+<p>
+    We can interpret this in the following way. 
+    If we look at two crabs who have both taken 
+    a 100 steps, let us assume that both of them 
+    have travelled exactly the same distance R(N),
+    but one has moved towards the left and 
+    downward from the origin, and the towards 
+    the right and upward. If we now take an average 
+    of the vector \(\mathbf{R(N)}\), we will find it 
+    to be zero, since the two vectors will perfectly 
+    cancel each other out! And even though we have 
+    picked a specific example to do this, this is 
+    generally true, because every possible value of 
+    the \(\mathbf{R(N)}\) will have a corresponding value 
+    that exactly cancels it out! But this does not mean 
+    that the average distance moved by the crab after a 
+    100 steps is zero. In fact, if we were to measure 
+    the final position of many crabs, and plot each of 
+    these on a graph, we would find that there will be 
+    a ring of points at a radius \(N^2\) from the centre where the crabs are the likeliest to end up!
+</p>
+
+<p>
+    Instead of being cruel and displacing thousands of 
+    actual frogs to verify whether all of our calculations 
+    are correct, we can create tiny virtual crabs which 
+    can be abducted and displaced without it weighing 
+    on our conscience. To create one such crab, we store 
+    the position of the crab (x, y), and then simply draw 
+    a random number between 0 and 1 for each step. If the 
+    number is below 0.25, we take a step upward, if it is 
+    between 0.25 and 0.5, we go downward, and so on. 
+    Assuming our random number has an equal chance to 
+    be anywhere between 0 and 1, or in other words, is 
+    drawn from a uniform probability distribution, this 
+    would mean at each step our virtual crab is equally 
+    likely to go in any of the four possible directions. 
+    We then simulate an N-step walk, and repeat this a 
+    large number of times in order to obtain the 
+    statistics for the system. 
+</p>
+
+<h2>The need for sampling</h2>
 </div>
 
 <!-- RIGHT CANVAS (unchanged functionality) -->
