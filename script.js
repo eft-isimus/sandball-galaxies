@@ -9,7 +9,7 @@ const cssWidth = 200;
 const cssHeight = window.innerHeight - 2 * margin;
 
 // parameters
-const stepSizePx = 30;   // scroll pixels per step
+const stepSizePx = 10;   // scroll pixels per step
 const stepLength = 10;   // fixed step length (grid spacing)
 
 // to keep the walk restrained within the box
@@ -47,10 +47,14 @@ function addStep() {
 
     const atLeft = last.x <= minX;
     const atRight = last.x >= maxX;
+    const atTop = last.y <= 0;
 
     const r = Math.random();
 
-    if (atLeft) {
+    if (atTop) {
+        dy = stepLength;
+    }
+      else if (atLeft) {
         if (r < 0.5) dy = stepLength;
         else dx = stepLength;
     } else if (atRight) {
