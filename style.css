@@ -1,0 +1,47 @@
+/* Modern font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+    margin: 0;
+    display: flex;
+    font-family: 'Inter', sans-serif;
+    color: #222;
+}
+
+/* Left text column */
+#left {
+    width: 70%;
+    padding: 40px;
+    line-height: 1.6;
+}
+
+/* Right canvas block */
+#right {
+    width: 30%;
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100vh;
+}
+
+/* Typography */
+h1 {
+    font-weight: 600;
+    margin-bottom: 16px;
+}
+
+h2 {
+    font-weight: 600;
+    margin-top: 24px;
+    margin-bottom: 12px;
+}
+
+p {
+    margin-bottom: 16px;
+}
+
+/* Footnote style */
+.footnote {
+    font-size: 0.9em;
+    color: #555;
+}
