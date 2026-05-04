@@ -1,5 +1,6 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+const padding = 20; // pixels of empty space on left/right
 
 // --- High DPI (fix low resolution) ---
 const margin = 20;
@@ -13,7 +14,8 @@ const stepSizePx = 10;   // scroll pixels per step
 const stepLength = 10;   // fixed step length (grid spacing)
 
 // to keep the walk restrained within the box
-const maxStepsX = Math.floor((cssWidth / 2) / stepLength);
+const usableWidth = cssWidth - 2 * padding;
+const maxStepsX = Math.floor((usableWidth / 2) / stepLength);
 const centerX = Math.floor(cssWidth / 2 / stepLength) * stepLength;
 const minX = centerX - maxStepsX * stepLength;
 const maxX = centerX + maxStepsX * stepLength;
