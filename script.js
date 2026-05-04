@@ -29,10 +29,6 @@ ctx.scale(dpr, dpr);
 // --- Random walk storage ---
 let points = [];
 
-// parameters
-const stepSizePx = 30;   // scroll pixels per step
-const stepLength = 10;   // fixed step length (grid spacing)
-
 // initialize
 function resetPoints() {
     points = [{
@@ -42,44 +38,7 @@ function resetPoints() {
 }
 resetPoints();
 
-// --- Biased discrete lattice step ---
-const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
-
-// --- High DPI (fix low resolution) ---
-const margin = 20;
-const dpr = window.devicePixelRatio || 1;
-
-const cssWidth = 200;
-const cssHeight = window.innerHeight - 2 * margin;
-
-// to keep the walk restrained within the box
-const maxStepsX = Math.floor((cssWidth / 2) / stepLength);
-const centerX = Math.floor(cssWidth / 2 / stepLength) * stepLength;
-const minX = centerX - maxStepsX * stepLength;
-const maxX = centerX + maxStepsX * stepLength;
-
-canvas.style.width = cssWidth + "px";
-canvas.style.height = cssHeight + "px";
-
-canvas.width = cssWidth * dpr;
-canvas.height = cssHeight * dpr;
-
-ctx.scale(dpr, dpr);
-
-// --- Random walk storage ---
-let points = [];
-
-// initialize
-function resetPoints() {
-    points = [{
-        x: centerX,
-        y: 0
-    }];
-}
-resetPoints();
-
-// --- Biased discrete lattice step ---
+// --- Step function ---
 function addStep() {
     const last = points[points.length - 1];
 
@@ -92,28 +51,15 @@ function addStep() {
     const r = Math.random();
 
     if (atLeft) {
-        // can only go right or down
-        if (r < 0.7) {
-            dy = stepLength;      // down
-        } else {
-            dx = stepLength;      // right
-        }
+        if (r < 0.7) dy = stepLength;
+        else dx = stepLength;
     } else if (atRight) {
-        // can only go left or down
-        if (r < 0.7) {
-            dy = stepLength;      // down
-        } else {
-            dx = -stepLength;     // left
-        }
+        if (r < 0.7) dy = stepLength;
+        else dx = -stepLength;
     } else {
-        // normal case (no upward motion)
-        if (r < 0.6) {
-            dy = stepLength;      // down
-        } else if (r < 0.8) {
-            dx = stepLength;      // right
-        } else {
-            dx = -stepLength;     // left
-        }
+        if (r < 0.6) dy = stepLength;
+        else if (r < 0.8) dx = stepLength;
+        else dx = -stepLength;
     }
 
     points.push({
@@ -122,20 +68,29 @@ function addStep() {
     });
 }
 
-    draw();
-});
+// --- Draw ---
+function draw() {
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+
+    for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+    }
+
+    ctx.stroke();
+}
 
 // --- Scroll handler ---
 window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
     const stepsNeeded = Math.floor(scrollTop / stepSizePx);
 
-    // grow
     while (points.length - 1 < stepsNeeded) {
         addStep();
     }
 
-    // shrink
     while (points.length - 1 > stepsNeeded) {
         points.pop();
     }
