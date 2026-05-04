@@ -16,33 +16,111 @@
 <!-- LEFT TEXT -->
 <div id="left" style="min-height: 3000px;">
 
-<h1>Dummy Heading</h1>
+<h1>RANDOM WALKS</h1>
 
+<h2>What is a random walker?</h2>
+    
 <p>
-This is a sample paragraph to demonstrate formatting. We include inline math such as
-\( R(N) = \sqrt{x(N)^2 + y(N)^2} \) to verify LaTeX rendering works correctly.
+    To avoid the cliche of the drunk man struggling to get home, let us consider a lost crab 
+    trying to get back to its burrow. If we were to be cruel enough to displace a small 
+    sand-bubbler crab by picking it up from next to its burrow, and placing it far, far away, 
+    it likely has no idea of how to get back home. In its confusion, it is as likely to step in 
+    one direction as in any other. In such a case, it is of course impossible for us to accurately 
+    predict the path that the crab will take, because every step it takes is random. 
+    But we can still model this kind of motion using what we call a random walk. 
 </p>
 
-<h2>Subheading</h2>
+<p>
+    Let us first simplify things by assuming that the crab's movement is restricted to a square grid, meaning 
+</p>
+<ol>
+    <li>it can only ever take a step forward, backward, to the left, or to the right,</li>
+    <li>and the length of each step is the same.</li>
+</ol>
 
 <p>
-Here is another paragraph with a display equation:
+    We must also remember an important assumption we made earlier, 
+    that the crab is just as likely to pick each direction, which means 
+    there is a 1/4 chance of it picking any of the four possible directions 
+    to take a step in. 
+ </p>
+
+<p>
+    We define our coordinate system such that the origin 
+    \((x,y) = (0, 0)\) is the point where the crab is dropped 
+    off after being rudely abducted. At any given time, 
+    the distance the crab has travelled from this point 
+    is \(R(N) = \sqrt{x(N)^2 + y(N)^2}\) , where N is 
+    the number of steps. We write x, y and R as 
+    functions of N because they change with every 
+    step that the crab takes, and thus depend on the 
+    number of steps it has taken thus far. We can also 
+    define a different but related value, the vector 
+    \(\mathbf{R(N)}\) (vectors are usually marked in bold-face), 
+    which has both a magnitude, which is \(R(N)\), and a direction, 
+    which depends on the x and y values specifically. 
 </p>
 
+<p>
+    Intuitively, we might expect that as the number of steps increases, 
+    the crab gets farther and farther away from its starting position. 
+    Let us see if we can arrive at this mathematically by trying to 
+    calculate \(\langle \mathbf{R(N)}\rangle\)<sup>1</sup>, (\footnote{The angular 
+    brackets around any quantity represent an average of some sort.}) 
+    Here, we can imagine that the average is taken over the paths of many, 
+    many crabs who have been displaced from their burrows.}) which 
+    represents the average of the vector \(\mathbf{R(N)}\). Now, let us 
+    consider what happens to the two position coordinates of the crab. 
+</p>
+
+<p class="footnote">
+<sup>1</sup> The angular brackets around any quantity represent 
+    an average of that quantity (what ensemble the average is over may 
+    need to be defined more clearly depending on the context).
+</p>
+
+<p>
+    A general prescription for calculating averages is as follows: 
+    we multiply a possible value of the variable with the 
+    probability that this value will occur. We then do this 
+    for all possible values, and take the sum of the resulting 
+    quantities. This is represented as follows:
+</p>
+    
 <p>
 \[
-\langle R^2(N) \rangle = N
+\sum_i P(x_i)\cdot x_i
 \]
 </p>
 
 <p>
-We can also reference something with a footnote<sup>1</sup>.
+    In our case, \(x\) can take the values +1 and -1. 
+    But since the probability for each of these steps 
+    is the same (1/4), this quantity simply gives us 
+    a zero. Similarly, the average for the position 
+    in y also gives us a zero. This must mean that 
+    the average, \(\langle \mathbf{R(N)}\rangle\) must 
+    be zero! But does this mean that our intuition 
+    about the crab moving farther and farther away 
+    from its origin with each step is completely 
+    wrong? Not really! To see this, we can calculate 
+    the average of a slightly different quantity 
+    \(\langle R^2(N)\rangle\), which is the square of 
+    the distance moved in N steps. 
 </p>
-
-<p class="footnote">
-<sup>1</sup> This is a sample footnote for testing formatting.
+<p>
+    \[
+    Calculation of \langle R^2(N)\rangle
+    \]
 </p>
-
+    We call this the mean squared displacement, 
+    and the average distance travelled by the 
+    crab is the square root of this quantity! 
+    But why is this quantity non-zero when the 
+    average of the vector \(\mathbf{R(N)}\) is zero? 
+<p>
+    
+</p>
 </div>
 
 <!-- RIGHT CANVAS (unchanged functionality) -->
