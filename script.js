@@ -91,9 +91,7 @@ function draw() {
     }
 
     ctx.stroke();
-}
-
-const last = points[points.length - 1];
+    const last = points[points.length - 1];
 
 const size = 20;
 
@@ -111,9 +109,10 @@ ctx.drawImage(
     -size / 2,
     size,
     size
-);
+    );
+    ctx.restore();
+}
 
-ctx.restore();
 // --- Scroll handler ---
 window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
