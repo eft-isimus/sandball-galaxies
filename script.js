@@ -51,14 +51,14 @@ function addStep() {
     const r = Math.random();
 
     if (atLeft) {
-        if (r < 0.7) dy = stepLength;
+        if (r < 0.5) dy = stepLength;
         else dx = stepLength;
     } else if (atRight) {
-        if (r < 0.7) dy = stepLength;
+        if (r < 0.5) dy = stepLength;
         else dx = -stepLength;
     } else {
-        if (r < 0.6) dy = stepLength;
-        else if (r < 0.8) dx = stepLength;
+        if (r < 0.33) dy = stepLength;
+        else if (r < 0.66) dx = stepLength;
         else dx = -stepLength;
     }
 
