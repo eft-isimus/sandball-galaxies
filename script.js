@@ -10,7 +10,10 @@ const cssWidth = 200;
 const cssHeight = window.innerHeight - 2 * margin;
 
 // parameters
-const stepSizePx = 10;   // scroll pixels per step
+const maxScroll = document.body.scrollHeight - window.innerHeight;
+const targetFraction = 2.5; // want ~250% height max (this is very unlikely as it would require only downward steps)
+const stepSizePx = (maxScroll * stepLength) / (targetFraction * cssHeight); // dynamically defined stepSizePx to ensure the walk rarely reaches the bottom
+// const stepSizePx = 10;   // scroll pixels per step
 const stepLength = 10;   // fixed step length (grid spacing)
 
 // to keep the walk restrained within the box
