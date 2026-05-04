@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Scroll Demo</title>
+    <title>Random Walk Scroll</title>
     <style>
         body {
             margin: 0;
@@ -10,6 +10,7 @@
         #left {
             width: 70%;
             padding: 20px;
+            height: 3000px; /* force scroll */
         }
         #right {
             width: 30%;
@@ -18,10 +19,8 @@
             top: 0;
             height: 100vh;
         }
-        #line {
-            width: 2px;
-            background: black;
-            height: 0;
+        canvas {
+            display: block;
             margin: 20px auto;
         }
     </style>
@@ -29,36 +28,11 @@
 <body>
 
 <div id="left">
-    <p>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-
-        <!-- repeat a lot -->
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
-    </p>
+    <p>Scroll down to grow the walk.</p>
 </div>
 
 <div id="right">
-    <div id="line"></div>
+    <canvas id="canvas"></canvas>
 </div>
 
 <script src="script.js"></script>
