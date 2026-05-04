@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scroll Demo</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+        }
+        #left {
+            width: 70%;
+            padding: 20px;
+        }
+        #right {
+            width: 30%;
+            position: fixed;
+            right: 0;
+            top: 0;
+            height: 100vh;
+        }
+        #line {
+            width: 2px;
+            background: black;
+            height: 0;
+            margin: 20px auto;
+        }
+    </style>
+</head>
+<body>
+
+<div id="left">
+    <p>
+        <!-- long text -->
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        <!-- just repeat this a bunch -->
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit.<br><br>
+    </p>
+</div>
+
+<div id="right">
+    <div id="line"></div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
