@@ -136,3 +136,98 @@ function showTab(id) {
 
     document.getElementById(id).style.display = 'block';
 }
+
+// --- TIME ENSEMBLE ---
+
+const walkCanvas = document.getElementById("walkCanvas");
+const walkCtx = walkCanvas.getContext("2d");
+
+const plotCanvas = document.getElementById("plotCanvas");
+const plotCtx = plotCanvas.getContext("2d");
+
+const W = 300, H = 300, maxSteps = 100;
+
+walkCanvas.width = plotCanvas.width = W;
+walkCanvas.height = plotCanvas.height = H;
+
+let pts, step, running;
+
+// reset
+function resetTimeEnsemble() {
+    pts = [{ x: W / 2, y: H / 2 }];
+    step = 0;
+    running = true;
+    loop();
+}
+
+// random step
+function stepWalk() {
+    const { x, y } = pts[pts.length - 1];
+    const r = Math.random();
+    pts.push(
+        r < 0.25 ? { x, y: y - stepLength } :
+        r < 0.5  ? { x, y: y + stepLength } :
+        r < 0.75 ? { x: x + stepLength, y } :
+                   { x: x - stepLength, y }
+    );
+}
+
+// draw walk
+function drawWalk() {
+    walkCtx.clearRect(0, 0, W, H);
+    walkCtx.beginPath();
+    walkCtx.moveTo(pts[0].x, pts[0].y);
+    pts.slice(1).forEach(p => walkCtx.lineTo(p.x, p.y));
+    walkCtx.stroke();
+}
+
+// compute R²
+function computeR2() {
+    const n = pts.length, R2 = [];
+    for (let k = 1; k < n; k++) {
+        let s = 0;
+        for (let t = 0; t < n - k; t++) {
+            const dx = pts[t + k].x - pts[t].x;
+            const dy = pts[t + k].y - pts[t].y;
+            s += dx * dx + dy * dy;
+        }
+        R2[k] = s / (n - k);
+    }
+    return R2;
+}
+
+// draw plot
+function drawPlot(R2) {
+    plotCtx.clearRect(0, 0, W, H);
+
+    const max = Math.max(...R2.filter(Boolean), 1);
+    const xs = W / maxSteps, ys = H / max;
+
+    plotCtx.beginPath();
+    R2.forEach((v, k) => {
+        if (!v) return;
+        const x = k * xs, y = H - v * ys;
+        k === 1 ? plotCtx.moveTo(x, y) : plotCtx.lineTo(x, y);
+    });
+    plotCtx.stroke();
+}
+
+// animation
+function loop() {
+    if (!running || step >= maxSteps) return;
+
+    stepWalk();
+    step++;
+
+    drawWalk();
+    drawPlot(computeR2());
+
+    setTimeout(loop, 40);
+}
+
+// hook into tabs
+const oldShowTab = showTab;
+showTab = function(id) {
+    oldShowTab(id);
+    if (id === "tab2") resetTimeEnsemble();
+};
