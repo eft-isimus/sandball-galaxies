@@ -15,6 +15,11 @@ body {
     line-height: 1.6;
 }
 
+.tabs button {
+    margin-right: 10px;
+    cursor: pointer;
+}
+
 /* Right canvas block */
 #right {
     width: 30%;
