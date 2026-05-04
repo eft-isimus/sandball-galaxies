@@ -1,3 +1,16 @@
+const plotDiv = document.getElementById("plotDiv");
+
+Plotly.newPlot(plotDiv, [{
+    x: [],
+    y: [],
+    mode: 'lines',
+    line: { width: 2 }
+}], {
+    margin: { t: 20, l: 40, r: 10, b: 40 },
+    xaxis: { title: 'N' },
+    yaxis: { title: 'R²(N)' }
+}, { displayModeBar: false });
+
 const crabImg = new Image();
 crabImg.src = "crab.png"; // crab for walker :)
 crabImg.onload = draw;
@@ -157,6 +170,14 @@ function resetTimeEnsemble() {
     pts = [{ x: W / 2, y: H / 2 }];
     step = 0;
     running = true;
+    Plotly.react(plotDiv, [{
+    x: [],
+    y: []
+}], {
+    margin: { t: 20, l: 40, r: 10, b: 40 },
+    xaxis: { title: 'N' },
+    yaxis: { title: 'R²(N)' }
+}, { displayModeBar: false });
     loop();
 }
 
@@ -198,18 +219,26 @@ function computeR2() {
 
 // draw plot
 function drawPlot(R2) {
-    plotCtx.clearRect(0, 0, W, H);
+    const x = [];
+    const y = [];
 
-    const max = Math.max(...R2.filter(Boolean), 1);
-    const xs = W / maxSteps, ys = H / max;
+    for (let k = 1; k < R2.length; k++) {
+        if (R2[k] !== undefined) {
+            x.push(k);
+            y.push(R2[k]);
+        }
+    }
 
-    plotCtx.beginPath();
-    R2.forEach((v, k) => {
-        if (!v) return;
-        const x = k * xs, y = H - v * ys;
-        k === 1 ? plotCtx.moveTo(x, y) : plotCtx.lineTo(x, y);
-    });
-    plotCtx.stroke();
+    Plotly.react(plotDiv, [{
+        x: x,
+        y: y,
+        mode: 'lines',
+        line: { width: 2 }
+    }], {
+        margin: { t: 20, l: 40, r: 10, b: 40 },
+        xaxis: { title: 'N' },
+        yaxis: { title: 'R²(N)' }
+    }, { displayModeBar: false });
 }
 
 // animation
