@@ -1,3 +1,7 @@
+const crabImg = new Image();
+crabImg.src = "crab.png"; // crab for walker :)
+crabImg.onload = draw;
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const padding = 20; // pixels of empty space on left/right
@@ -89,6 +93,27 @@ function draw() {
     ctx.stroke();
 }
 
+const last = points[points.length - 1];
+
+const size = 20;
+
+// move origin to crab position
+ctx.save();
+ctx.translate(last.x, last.y);
+
+// rotate (-90° = -π/2)
+ctx.rotate(-Math.PI / 2);
+
+// draw centered
+ctx.drawImage(
+    crabImg,
+    -size / 2,
+    -size / 2,
+    size,
+    size
+);
+
+ctx.restore();
 // --- Scroll handler ---
 window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
