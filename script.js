@@ -1,33 +1,56 @@
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-// size canvas
+// --- High DPI (fix low resolution) ---
 const margin = 20;
-canvas.width = 200;
-canvas.height = window.innerHeight - 2 * margin;
+const dpr = window.devicePixelRatio || 1;
 
-// random walk storage
+const cssWidth = 200;
+const cssHeight = window.innerHeight - 2 * margin;
+
+canvas.style.width = cssWidth + "px";
+canvas.style.height = cssHeight + "px";
+
+canvas.width = cssWidth * dpr;
+canvas.height = cssHeight * dpr;
+
+ctx.scale(dpr, dpr);
+
+// --- Random walk storage ---
 let points = [];
 
 // parameters
 const stepSizePx = 30;   // scroll pixels per step
-const stepLength = 10;   // length of each step
+const stepLength = 10;   // fixed step length (grid spacing)
 
-// initialize starting point (top center)
+// initialize
 function resetPoints() {
     points = [{
-        x: canvas.width / 2,
+        x: Math.floor(cssWidth / 2 / stepLength) * stepLength,
         y: 0
     }];
 }
 resetPoints();
 
-// generate next step (biased downward)
+// --- Biased discrete lattice step ---
 function addStep() {
     const last = points[points.length - 1];
 
-    const dx = (Math.random() - 0.5) * 20;   // small horizontal randomness
-    const dy = Math.random() * stepLength;   // always downward (biased)
+    // probabilities (heavily biased downward)
+    const r = Math.random();
+
+    let dx = 0;
+    let dy = 0;
+
+    if (r < 0.6) {
+        dy = stepLength;          // down (60%)
+    } else if (r < 0.75) {
+        dx = stepLength;          // right (15%)
+    } else if (r < 0.9) {
+        dx = -stepLength;         // left (15%)
+    } else {
+        dy = -stepLength;         // up (10%)
+    }
 
     points.push({
         x: last.x + dx,
@@ -35,9 +58,9 @@ function addStep() {
     });
 }
 
-// draw full walk
+// --- Draw ---
 function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.clearRect(0, 0, cssWidth, cssHeight);
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
@@ -49,7 +72,7 @@ function draw() {
     ctx.stroke();
 }
 
-// scroll handler
+// --- Scroll handler ---
 window.addEventListener("scroll", function () {
     const scrollTop = window.scrollY;
     const stepsNeeded = Math.floor(scrollTop / stepSizePx);
@@ -59,7 +82,7 @@ window.addEventListener("scroll", function () {
         addStep();
     }
 
-    // shrink (when scrolling up)
+    // shrink
     while (points.length - 1 > stepsNeeded) {
         points.pop();
     }
