@@ -1,40 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Random Walk Scroll</title>
-    <style>
-        body {
-            margin: 0;
-            display: flex;
-        }
-        #left {
-            width: 70%;
-            padding: 20px;
-            height: 3000px; /* force scroll */
-        }
-        #right {
-            width: 30%;
-            position: fixed;
-            right: 0;
-            top: 0;
-            height: 100vh;
-        }
-        canvas {
-            display: block;
-            margin: 20px auto;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <title>Demo</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+    <!-- MathJax for LaTeX -->
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
+
 <body>
 
-<div id="left">
-    <p>Scroll down to grow the walk.</p>
+<!-- LEFT TEXT -->
+<div id="left" style="min-height: 3000px;">
+
+<h1>Dummy Heading</h1>
+
+<p>
+This is a sample paragraph to demonstrate formatting. We include inline math such as
+\( R(N) = \sqrt{x(N)^2 + y(N)^2} \) to verify LaTeX rendering works correctly.
+</p>
+
+<h2>Subheading</h2>
+
+<p>
+Here is another paragraph with a display equation:
+</p>
+
+<p>
+\[
+\langle R^2(N) \rangle = N
+\]
+</p>
+
+<p>
+We can also reference something with a footnote<sup>1</sup>.
+</p>
+
+<p class="footnote">
+<sup>1</sup> This is a sample footnote for testing formatting.
+</p>
+
 </div>
 
+<!-- RIGHT CANVAS (unchanged functionality) -->
 <div id="right">
     <canvas id="canvas"></canvas>
 </div>
 
+<!-- YOUR SCRIPT -->
 <script src="script.js"></script>
 
 </body>
