@@ -358,19 +358,18 @@ const particleMaxWalks = 50;
 const particleSteps = 200;
 const particleStepLength = 1;
 const particleTotalRenderMs = 200; // 0.2 s total
-const particleStepDelayMs = particleTotalRenderMs / particleSteps; // 1 ms
+const particleStepDelayMs = particleTotalRenderMs / particleSteps; // 1 ms/step
 const particleWalkRange = 25;
 
-let particleWalks = []; // array of full walks, each walk length = particleSteps + 1
-let particleAnimating = false;
-let particleCurrentStep = 0;
-let particleAnimTimer = null;
-
-// Plotly default color cycle
+// compact color pool (cycles)
 const particleColors = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
 ];
+
+// each entry: { fullPath, currentStep, color, done }
+let particleWalks = [];
+let particleTimer = null;
 
 function particleOneStep(x, y) {
     const r = Math.random();
@@ -380,77 +379,68 @@ function particleOneStep(x, y) {
     return { x: x - particleStepLength, y };
 }
 
-function buildParticleWalk(nSteps) {
+function buildParticleWalk() {
     const pts = [{ x: 0, y: 0 }];
-    for (let i = 0; i < nSteps; i++) {
+    for (let i = 0; i < particleSteps; i++) {
         const last = pts[pts.length - 1];
         pts.push(particleOneStep(last.x, last.y));
     }
     return pts;
 }
 
-// plain MSD for one walk: R^2(N) = x(N)^2 + y(N)^2
-function computePlainR2ForWalk(walk) {
-    const out = [];
-    for (let n = 1; n < walk.length; n++) {
-        const x = walk[n].x;
-        const y = walk[n].y;
-        out[n] = x * x + y * y;
-    }
-    return out;
-}
+// plain MSD per walk endpoint, ensemble-averaged over currently added walks
+function computeParticleEnsembleR2() {
+    if (particleWalks.length === 0) return { x: [], y: [] };
 
-// average plain R^2(N) over all currently present walks
-function computeParticleEnsembleR2(currentStep) {
-    const nWalks = particleWalks.length;
-    if (nWalks === 0 || currentStep < 1) return { x: [], y: [] };
+    // include only completed walks for ensemble curve stability
+    const completed = particleWalks.filter(w => w.done);
+    if (completed.length === 0) return { x: [], y: [] };
 
-    const yAvg = [];
-    for (let n = 1; n <= currentStep; n++) {
+    const x = [];
+    const y = [];
+    for (let n = 1; n <= particleSteps; n++) {
         let s = 0;
-        for (let w = 0; w < nWalks; w++) {
-            const p = particleWalks[w][n];
+        for (const w of completed) {
+            const p = w.fullPath[n];
             s += p.x * p.x + p.y * p.y;
         }
-        yAvg.push(s / nWalks);
+        x.push(n);
+        y.push(s / completed.length);
     }
-
-    const xVals = Array.from({ length: currentStep }, (_, i) => i + 1);
-    return { x: xVals, y: yAvg };
+    return { x, y };
 }
 
-function renderParticleWalkPane(stepCount) {
+function renderParticleWalkPane() {
     if (!particleWalkDiv || !window.Plotly) return;
 
     const traces = [];
 
-    // draw each walk with low alpha line + endpoint marker in same color
-    for (let w = 0; w < particleWalks.length; w++) {
-        const colorHex = particleColors[w % particleColors.length];
-        const walk = particleWalks[w].slice(0, stepCount + 1);
+    for (let i = 0; i < particleWalks.length; i++) {
+        const w = particleWalks[i];
+        const shown = w.fullPath.slice(0, w.currentStep + 1);
 
-        if (walk.length > 1) {
+        if (shown.length > 1) {
             traces.push({
-                x: walk.map(p => p.x),
-                y: walk.map(p => p.y),
+                x: shown.map(p => p.x),
+                y: shown.map(p => p.y),
                 mode: "lines",
-                line: { width: 2, color: colorHex },
+                line: { width: 2, color: w.color },
                 opacity: 0.45,
                 showlegend: false
             });
         }
 
-        const end = walk[walk.length - 1];
+        const end = shown[shown.length - 1];
         traces.push({
             x: [end.x],
             y: [end.y],
             mode: "markers",
-            marker: { size: 5, color: colorHex },
+            marker: { size: 5, color: w.color },
             showlegend: false
         });
     }
 
-    // static origin marker (keep size = 5 like your time tab)
+    // static origin
     traces.push({
         x: [0],
         y: [0],
@@ -473,16 +463,15 @@ function renderParticleWalkPane(stepCount) {
     );
 }
 
-function renderParticleR2Pane(stepCount) {
+function renderParticleR2Pane() {
     if (!particlePlotDiv || !window.Plotly) return;
 
-    const idealX = Array.from({ length: 201 }, (_, i) => i); // 0..200
+    const avg = computeParticleEnsembleR2();
+
+    const idealX = Array.from({ length: particleSteps + 1 }, (_, i) => i); // 0..200
     const idealY = idealX.map(n => n);
 
-    const avg = computeParticleEnsembleR2(stepCount);
-
     const traces = [];
-
     if (avg.x.length > 0) {
         traces.push({
             x: avg.x,
@@ -524,61 +513,72 @@ function renderParticleR2Pane(stepCount) {
     );
 }
 
-function renderParticle(stepCount) {
-    renderParticleWalkPane(stepCount);
-    renderParticleR2Pane(stepCount);
+function renderParticleAll() {
+    renderParticleWalkPane();
+    renderParticleR2Pane();
     if (particleCount) particleCount.textContent = String(particleWalks.length);
 }
 
 function particleTick() {
-    if (particleCurrentStep >= particleSteps) {
-        particleAnimating = false;
-        particleAnimTimer = null;
-        return;
+    let anyActive = false;
+
+    for (const w of particleWalks) {
+        if (!w.done) {
+            anyActive = true;
+            w.currentStep += 1;
+            if (w.currentStep >= particleSteps) {
+                w.currentStep = particleSteps;
+                w.done = true;
+            }
+        }
     }
 
-    particleCurrentStep += 1;
-    renderParticle(particleCurrentStep);
+    renderParticleAll();
+    updateAddButton();
 
-    particleAnimTimer = setTimeout(particleTick, particleStepDelayMs);
-}
-
-function startParticleAnimationFromZero() {
-    if (particleAnimTimer) {
-        clearTimeout(particleAnimTimer);
-        particleAnimTimer = null;
+    if (anyActive) {
+        particleTimer = setTimeout(particleTick, particleStepDelayMs);
+    } else {
+        particleTimer = null;
     }
-    particleAnimating = true;
-    particleCurrentStep = 0;
-    renderParticle(0);
-    particleTick();
 }
 
-function updateAddWalkButtonState() {
+function ensureParticleTimerRunning() {
+    if (!particleTimer) particleTick();
+}
+
+function updateAddButton() {
     if (!addWalkBtn) return;
-    const atMax = particleWalks.length >= particleMaxWalks;
-    addWalkBtn.disabled = atMax;
+    addWalkBtn.disabled = particleWalks.length >= particleMaxWalks;
 }
 
 function addParticleWalk() {
-    if (particleAnimating) return;
     if (particleWalks.length >= particleMaxWalks) return;
 
-    particleWalks.push(buildParticleWalk(particleSteps));
-    updateAddWalkButtonState();
-    startParticleAnimationFromZero();
+    const idx = particleWalks.length;
+    particleWalks.push({
+        fullPath: buildParticleWalk(),
+        currentStep: 0,
+        done: false,
+        color: particleColors[idx % particleColors.length]
+    });
+
+    updateAddButton();
+    renderParticleAll();       // immediately show new walk origin/marker
+    ensureParticleTimerRunning(); // animate even if others are already animating
 }
 
 function initParticleEnsemble() {
     if (!window.Plotly || !particleWalkDiv || !particlePlotDiv || !addWalkBtn) return;
 
     if (particleWalks.length === 0) {
-        particleWalks.push(buildParticleWalk(particleSteps)); // initial single walk
-        updateAddWalkButtonState();
-        startParticleAnimationFromZero();
+        addParticleWalk(); // initial walk auto-start
     } else {
-        renderParticle(particleCurrentStep);
+        renderParticleAll();
     }
 
     addWalkBtn.onclick = addParticleWalk;
+    updateAddButton();
 }
+
+window.addEventListener("DOMContentLoaded", initParticleEnsemble);
