@@ -10,7 +10,7 @@ body {
 
 /* Left text column */
 #left {
-    width: 70%;
+    width: calc(100% - 200px);
     padding: 40px;
     line-height: 1.6;
 }
@@ -22,7 +22,7 @@ body {
 
 /* Right canvas block */
 #right {
-    width: 30%;
+    width: 200px;
     position: fixed;
     right: 0;
     top: 0;
