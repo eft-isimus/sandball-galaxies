@@ -1,22 +1,20 @@
 const plotDiv = document.getElementById("plotDiv");
+const plotLayout = {
+    width: 300,
+    height: 300,
+    margin: { t: 20, l: 40, r: 10, b: 40 },
+    xaxis: { title: "N" },
+    yaxis: { title: "R²(N)" }
+};
+const plotConfig = { displayModeBar: false, responsive: false };
 
-
-function ensurePlotlyLoaded() {
-    if (window.Plotly) return Promise.resolve();
-
-    return new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js";
-        script.onload = () => window.Plotly ? resolve() : reject(new Error("Plotly failed to initialize"));
-        script.onerror = () => reject(new Error("Plotly CDN load failed"));
-        document.head.appendChild(script);
-    });
-}
-
-function showPlotError(err) {
-    const msg = `Plot rendering failed: ${err.message}`;
-    if (walkDiv) walkDiv.textContent = msg;
-    if (plotDiv) plotDiv.textContent = msg;
+function renderTimePlot(x, y) {
+    Plotly.react(plotDiv, [{
+        x: x,
+        y: y,
+        mode: "lines",
+        line: { width: 2 }
+    }], plotLayout, plotConfig);
 }
 
 const crabImg = new Image();
@@ -158,18 +156,26 @@ function showTab(id) {
     document.getElementById(id).style.display = 'block';
 }
 
-// --- TIME ENSEMBLE (STATIC PLOTS) ---
+// --- TIME ENSEMBLE ---
 
-const walkDiv = document.getElementById("walkDiv");
+const walkCanvas = document.getElementById("walkCanvas");
+const walkCtx = walkCanvas.getContext("2d");
+
 const W = 300, H = 300, maxSteps = 100;
 
-const walkLayout = {
-    width: W,
-    height: H,
-    margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
-    yaxis: { title: "y" }
-};
+walkCanvas.width = W;
+walkCanvas.height = H;
+
+let pts, step, running;
+
+// reset
+function resetTimeEnsemble() {
+    pts = [{ x: W / 2, y: H / 2 }];
+    step = 0;
+    running = true;
+    renderTimePlot([], []);
+    loop();
+}
 
 const plotLayout = {
     width: W,
@@ -211,8 +217,7 @@ function computeR2(points) {
     return R2;
 }
 
-async function renderStaticTimeEnsemble() {
-    await ensurePlotlyLoaded();
+function renderStaticTimeEnsemble() {
     const pts = generateWalk(maxSteps);
 
     Plotly.newPlot(walkDiv, [{
@@ -233,17 +238,11 @@ async function renderStaticTimeEnsemble() {
         }
     }
 
-    Plotly.newPlot(plotDiv, [{
-        x: x,
-        y: y,
-        mode: "lines+markers",
-        marker: { size: 4 },
-        line: { width: 2 }
-    }], plotLayout, plotConfig);
+    renderTimePlot(x, y);
 }
 
 function resetTimeEnsemble() {
-    renderStaticTimeEnsemble().catch(showPlotError);
+    renderStaticTimeEnsemble();
 }
 
 // hook into tabs
