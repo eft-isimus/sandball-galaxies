@@ -155,13 +155,10 @@ function showTab(id) {
 const walkCanvas = document.getElementById("walkCanvas");
 const walkCtx = walkCanvas.getContext("2d");
 
-const plotCanvas = document.getElementById("plotCanvas");
-const plotCtx = plotCanvas.getContext("2d");
-
 const W = 300, H = 300, maxSteps = 100;
 
-walkCanvas.width = plotCanvas.width = W;
-walkCanvas.height = plotCanvas.height = H;
+walkCanvas.width = W;
+walkCanvas.height = H;
 
 let pts, step, running;
 
