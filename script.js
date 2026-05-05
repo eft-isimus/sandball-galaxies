@@ -15,7 +15,7 @@ const cssHeight = window.innerHeight - 2 * margin;
 // ==============================
 // RIGHT PANEL: SCROLL WALKER
 // ==============================
-const rightStepLength = 10; // restored independent step size for right panel
+const rightStepLength = 10;
 
 const maxScroll = document.body.scrollHeight - window.innerHeight;
 const targetFraction = 2.5;
@@ -72,14 +72,11 @@ function drawRightWalker() {
     if (!ctx) return;
 
     ctx.clearRect(0, 0, cssWidth, cssHeight);
-
     if (!points.length) return;
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
-    for (let i = 1; i < points.length; i++) {
-        ctx.lineTo(points[i].x, points[i].y);
-    }
+    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
     ctx.stroke();
 
     if (!crabImg.complete) return;
@@ -95,10 +92,8 @@ function drawRightWalker() {
 
 window.addEventListener("scroll", () => {
     const stepsNeeded = Math.floor(window.scrollY / stepSizePx);
-
     while (points.length - 1 < stepsNeeded) addStep();
     while (points.length - 1 > stepsNeeded) points.pop();
-
     drawRightWalker();
 });
 
@@ -118,37 +113,51 @@ function showTab(id) {
     if (target) target.style.display = "block";
 
     if (id === "tab2") {
-        resetTimeEnsemble();
+        initTimeEnsemble();
     }
 }
 window.showTab = showTab;
 
 // ==============================
-// TIME ENSEMBLE (BOTTOM / TAB2)
+// TIME ENSEMBLE WITH SLIDER
 // ==============================
-const maxTimeSteps = 100;
-const timeStepLength = 1; // independent step size for time-ensemble walk
+const timeStepLength = 1;
+const maxSliderSteps = 200;
+const walkPlotRange = 25;
 const W = 300;
 const H = 300;
+const stepDelayMs = 30;
+
 const plotConfig = { displayModeBar: false, responsive: true };
 
-let timeAnimationToken = 0;
+const stepSlider = document.getElementById("stepSlider");
+const stepValue = document.getElementById("stepValue");
 
-function stepTimeWalk(pts) {
-    const { x, y } = pts[pts.length - 1];
+let precomputedWalk = [];
+let currentStep = 0;
+let targetStep = 0;
+let sliderTimer = null;
+
+function computeOneStep(x, y) {
     const r = Math.random();
-    pts.push(
-        r < 0.25 ? { x, y: y - timeStepLength } :
-        r < 0.5  ? { x, y: y + timeStepLength } :
-        r < 0.75 ? { x: x + timeStepLength, y } :
-                   { x: x - timeStepLength, y }
-    );
+    if (r < 0.25) return { x, y: y - timeStepLength };
+    if (r < 0.5) return { x, y: y + timeStepLength };
+    if (r < 0.75) return { x: x + timeStepLength, y };
+    return { x: x - timeStepLength, y };
+}
+
+function buildPrecomputedWalk(nSteps) {
+    const pts = [{ x: 0, y: 0 }];
+    for (let i = 0; i < nSteps; i++) {
+        const last = pts[pts.length - 1];
+        pts.push(computeOneStep(last.x, last.y));
+    }
+    return pts;
 }
 
 function computeR2(pts) {
     const n = pts.length;
     const out = [];
-
     for (let k = 1; k < n; k++) {
         let s = 0;
         for (let t = 0; t < n - k; t++) {
@@ -158,125 +167,140 @@ function computeR2(pts) {
         }
         out[k] = s / (n - k);
     }
-
     return out;
 }
 
-function renderWalkPane(pts) {
-    Plotly.newPlot(
-        "walkDiv",
-        [{
+function renderWalkPane(stepCount) {
+    const pts = precomputedWalk.slice(0, stepCount + 1);
+
+    const trace = stepCount === 0
+        ? []
+        : [{
             x: pts.map(p => p.x),
             y: pts.map(p => p.y),
             mode: "lines+markers",
             marker: { size: 3 },
-            line: { width: 2 }
-        }],
+            line: { width: 2 },
+            name: "Walk"
+        }];
+
+    Plotly.react(
+        "walkDiv",
+        trace,
         {
             width: W,
             height: H,
             margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "x", range: [-25, 25], scaleanchor: "y", scaleratio: 1 },
-            yaxis: { title: "y", range: [-25, 25] }
+            xaxis: { title: "x", range: [-walkPlotRange, walkPlotRange], scaleanchor: "y", scaleratio: 1 },
+            yaxis: { title: "y", range: [-walkPlotRange, walkPlotRange] }
         },
         plotConfig
     );
 }
 
-function renderR2Pane(pts) {
-    const r2 = computeR2(pts);
-    const kVals = [];
-    const rVals = [];
+function renderR2Pane(stepCount) {
+    const idealX = Array.from({ length: 101 }, (_, i) => i); // 0..100
+    const idealY = idealX.map(n => n);
 
-    for (let k = 1; k < r2.length; k++) {
-        if (r2[k] !== undefined) {
-            kVals.push(k);
-            rVals.push(r2[k]);
+    let simTrace = [];
+    if (stepCount >= 2) {
+        const pts = precomputedWalk.slice(0, stepCount + 1);
+        const r2 = computeR2(pts);
+        const kVals = [];
+        const rVals = [];
+
+        for (let k = 1; k < r2.length; k++) {
+            if (r2[k] !== undefined) {
+                kVals.push(k);
+                rVals.push(r2[k]);
+            }
         }
+
+        simTrace = [{
+            x: kVals,
+            y: rVals,
+            mode: "lines+markers",
+            marker: { size: 4 },
+            line: { width: 2 },
+            name: "Simulated R²(N)"
+        }];
     }
 
-    const idealX = Array.from({ length: maxTimeSteps }, (_, i) => i + 1);
-    const idealY = idealX.map(n => n); // slope 1 line: R² = N
+    const idealTrace = {
+        x: idealX,
+        y: idealY,
+        mode: "lines",
+        line: { color: "rgba(255,0,0,0.7)", width: 2 },
+        name: "Ideal R²=N"
+    };
 
-    Plotly.newPlot(
+    Plotly.react(
         "plotDiv",
-        [
-            {
-                x: kVals,
-                y: rVals,
-                mode: "lines+markers",
-                marker: { size: 4 },
-                line: { width: 2 },
-                name: "Simulated R²(N)"
-            },
-            {
-                x: idealX,
-                y: idealY,
-                mode: "lines",
-                line: { color: "rgba(255,0,0,0.7)", width: 2 },
-                name: "Ideal R²=N"
-            }
-        ],
+        [...simTrace, idealTrace],
         {
             width: W,
             height: H,
             margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "N" },
-            yaxis: { title: "R²(N)" }
+            xaxis: { title: "N", range: [-5, 105] },
+            yaxis: { title: "R²(N)", range: [-5, 105] }
         },
         plotConfig
     );
 }
 
-function animateWalkThenPlotR2() {
-    if (!walkDiv || !plotDiv) return;
+function renderTimeEnsemble(stepCount) {
+    renderWalkPane(stepCount);
+    renderR2Pane(stepCount);
+    if (stepValue) stepValue.textContent = String(stepCount);
+}
 
-    if (!window.Plotly) {
-        const msg = "Plotly failed to load.";
-        walkDiv.textContent = msg;
-        plotDiv.textContent = msg;
+function tickTowardsTarget() {
+    if (currentStep === targetStep) {
+        sliderTimer = null;
         return;
     }
 
-    const token = ++timeAnimationToken;
-    const pts = [{ x: 0, y: 0 }];
-    const delayMs = 40;
-    let stepsDone = 0;
+    currentStep += currentStep < targetStep ? 1 : -1;
+    renderTimeEnsemble(currentStep);
 
-    Plotly.newPlot(
-        "plotDiv",
-        [],
-        {
-            width: W,
-            height: H,
-            margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "N" },
-            yaxis: { title: "R²(N)" }
-        },
-        plotConfig
-    );
+    sliderTimer = setTimeout(tickTowardsTarget, stepDelayMs);
+}
 
-    renderWalkPane(pts);
+function setTargetStep(n) {
+    targetStep = Math.max(0, Math.min(maxSliderSteps, n));
+    if (!sliderTimer) tickTowardsTarget();
+}
 
-    function tick() {
-        if (token !== timeAnimationToken) return;
+function initTimeEnsemble() {
+    if (!window.Plotly || !walkDiv || !plotDiv || !stepSlider || !stepValue) return;
 
-        if (stepsDone >= maxTimeSteps) {
-            renderR2Pane(pts);
-            return;
-        }
+    precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
+    currentStep = 0;
+    targetStep = 0;
 
-        stepTimeWalk(pts);
-        stepsDone += 1;
-        renderWalkPane(pts);
+    stepSlider.min = "0";
+    stepSlider.max = String(maxSliderSteps);
+    stepSlider.step = "1";
+    stepSlider.value = "0";
 
-        setTimeout(tick, delayMs);
-    }
+    stepSlider.oninput = (e) => {
+        setTargetStep(Number(e.target.value));
+    };
 
-    tick();
+    renderTimeEnsemble(0);
 }
 
 function resetTimeEnsemble() {
-    animateWalkThenPlotR2();
+    if (sliderTimer) {
+        clearTimeout(sliderTimer);
+        sliderTimer = null;
+    }
+
+    precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
+    currentStep = 0;
+    targetStep = 0;
+
+    if (stepSlider) stepSlider.value = "0";
+    renderTimeEnsemble(0);
 }
 window.resetTimeEnsemble = resetTimeEnsemble;
