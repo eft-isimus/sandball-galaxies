@@ -343,3 +343,240 @@ function resetTimeEnsemble() {
     renderTimeEnsemble(0);
 }
 window.resetTimeEnsemble = resetTimeEnsemble;
+
+// ==============================
+// PARTICLE ENSEMBLE (TAB 1)
+// ==============================
+const particleWalkDiv = document.getElementById("particleWalkDiv");
+const particlePlotDiv = document.getElementById("particlePlotDiv");
+const addWalkBtn = document.getElementById("addWalkBtn");
+const particleCount = document.getElementById("particleCount");
+
+const particleMaxWalks = 50;
+const particleSteps = 200;
+const particleStepLength = 1;
+const particleTotalRenderMs = 200; // 0.2 s total
+const particleStepDelayMs = particleTotalRenderMs / particleSteps; // 1 ms
+const particleWalkRange = 25;
+
+let particleWalks = []; // array of full walks, each walk length = particleSteps + 1
+let particleAnimating = false;
+let particleCurrentStep = 0;
+let particleAnimTimer = null;
+
+// Plotly default color cycle
+const particleColors = [
+    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
+    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+];
+
+function particleOneStep(x, y) {
+    const r = Math.random();
+    if (r < 0.25) return { x, y: y - particleStepLength };
+    if (r < 0.5) return { x, y: y + particleStepLength };
+    if (r < 0.75) return { x: x + particleStepLength, y };
+    return { x: x - particleStepLength, y };
+}
+
+function buildParticleWalk(nSteps) {
+    const pts = [{ x: 0, y: 0 }];
+    for (let i = 0; i < nSteps; i++) {
+        const last = pts[pts.length - 1];
+        pts.push(particleOneStep(last.x, last.y));
+    }
+    return pts;
+}
+
+// plain MSD for one walk: R^2(N) = x(N)^2 + y(N)^2
+function computePlainR2ForWalk(walk) {
+    const out = [];
+    for (let n = 1; n < walk.length; n++) {
+        const x = walk[n].x;
+        const y = walk[n].y;
+        out[n] = x * x + y * y;
+    }
+    return out;
+}
+
+// average plain R^2(N) over all currently present walks
+function computeParticleEnsembleR2(currentStep) {
+    const nWalks = particleWalks.length;
+    if (nWalks === 0 || currentStep < 1) return { x: [], y: [] };
+
+    const yAvg = [];
+    for (let n = 1; n <= currentStep; n++) {
+        let s = 0;
+        for (let w = 0; w < nWalks; w++) {
+            const p = particleWalks[w][n];
+            s += p.x * p.x + p.y * p.y;
+        }
+        yAvg.push(s / nWalks);
+    }
+
+    const xVals = Array.from({ length: currentStep }, (_, i) => i + 1);
+    return { x: xVals, y: yAvg };
+}
+
+function renderParticleWalkPane(stepCount) {
+    if (!particleWalkDiv || !window.Plotly) return;
+
+    const traces = [];
+
+    // draw each walk with low alpha line + endpoint marker in same color
+    for (let w = 0; w < particleWalks.length; w++) {
+        const colorHex = particleColors[w % particleColors.length];
+        const walk = particleWalks[w].slice(0, stepCount + 1);
+
+        if (walk.length > 1) {
+            traces.push({
+                x: walk.map(p => p.x),
+                y: walk.map(p => p.y),
+                mode: "lines",
+                line: { width: 2, color: colorHex },
+                opacity: 0.45,
+                showlegend: false
+            });
+        }
+
+        const end = walk[walk.length - 1];
+        traces.push({
+            x: [end.x],
+            y: [end.y],
+            mode: "markers",
+            marker: { size: 5, color: colorHex },
+            showlegend: false
+        });
+    }
+
+    // static origin marker (keep size = 5 like your time tab)
+    traces.push({
+        x: [0],
+        y: [0],
+        mode: "markers",
+        marker: { size: 5, color: "green" },
+        showlegend: false
+    });
+
+    Plotly.react(
+        "particleWalkDiv",
+        traces,
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "x", range: [-particleWalkRange, particleWalkRange], scaleanchor: "y", scaleratio: 1 },
+            yaxis: { title: "y", range: [-particleWalkRange, particleWalkRange] }
+        },
+        plotConfig
+    );
+}
+
+function renderParticleR2Pane(stepCount) {
+    if (!particlePlotDiv || !window.Plotly) return;
+
+    const idealX = Array.from({ length: 201 }, (_, i) => i); // 0..200
+    const idealY = idealX.map(n => n);
+
+    const avg = computeParticleEnsembleR2(stepCount);
+
+    const traces = [];
+
+    if (avg.x.length > 0) {
+        traces.push({
+            x: avg.x,
+            y: avg.y,
+            mode: "lines+markers",
+            marker: { size: 4 },
+            line: { width: 2 },
+            name: "Ensemble ⟨R²(N)⟩"
+        });
+    }
+
+    traces.push({
+        x: idealX,
+        y: idealY,
+        mode: "lines",
+        line: { color: "rgba(255,0,0,0.7)", width: 2 },
+        name: "Ideal R²=N"
+    });
+
+    Plotly.react(
+        "particlePlotDiv",
+        traces,
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "N", range: [-5, 205] },
+            yaxis: { title: "R²(N)", range: [-5, 205] },
+            showlegend: true,
+            legend: {
+                x: 0.02,
+                y: 0.98,
+                xanchor: "left",
+                yanchor: "top",
+                bgcolor: "rgba(255,255,255,0.65)"
+            }
+        },
+        plotConfig
+    );
+}
+
+function renderParticle(stepCount) {
+    renderParticleWalkPane(stepCount);
+    renderParticleR2Pane(stepCount);
+    if (particleCount) particleCount.textContent = String(particleWalks.length);
+}
+
+function particleTick() {
+    if (particleCurrentStep >= particleSteps) {
+        particleAnimating = false;
+        particleAnimTimer = null;
+        return;
+    }
+
+    particleCurrentStep += 1;
+    renderParticle(particleCurrentStep);
+
+    particleAnimTimer = setTimeout(particleTick, particleStepDelayMs);
+}
+
+function startParticleAnimationFromZero() {
+    if (particleAnimTimer) {
+        clearTimeout(particleAnimTimer);
+        particleAnimTimer = null;
+    }
+    particleAnimating = true;
+    particleCurrentStep = 0;
+    renderParticle(0);
+    particleTick();
+}
+
+function updateAddWalkButtonState() {
+    if (!addWalkBtn) return;
+    const atMax = particleWalks.length >= particleMaxWalks;
+    addWalkBtn.disabled = atMax;
+}
+
+function addParticleWalk() {
+    if (particleAnimating) return;
+    if (particleWalks.length >= particleMaxWalks) return;
+
+    particleWalks.push(buildParticleWalk(particleSteps));
+    updateAddWalkButtonState();
+    startParticleAnimationFromZero();
+}
+
+function initParticleEnsemble() {
+    if (!window.Plotly || !particleWalkDiv || !particlePlotDiv || !addWalkBtn) return;
+
+    if (particleWalks.length === 0) {
+        particleWalks.push(buildParticleWalk(particleSteps)); // initial single walk
+        updateAddWalkButtonState();
+        startParticleAnimationFromZero();
+    } else {
+        renderParticle(particleCurrentStep);
+    }
+
+    addWalkBtn.onclick = addParticleWalk;
+}
