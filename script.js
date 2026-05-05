@@ -137,8 +137,6 @@ let precomputedWalk = [];
 let currentStep = 0;
 let targetStep = 0;
 let sliderTimer = null;
-let lastSliderValue = 0;
-let lastDirection = 0; // +1 forward, -1 backward, 0 none
 
 function computeOneStep(x, y) {
     const r = Math.random();
@@ -155,6 +153,13 @@ function buildPrecomputedWalk(nSteps) {
         pts.push(computeOneStep(last.x, last.y));
     }
     return pts;
+}
+
+function extendPrecomputedWalkTo(targetLen) {
+    while (precomputedWalk.length < targetLen) {
+        const last = precomputedWalk[precomputedWalk.length - 1];
+        precomputedWalk.push(computeOneStep(last.x, last.y));
+    }
 }
 
 function computeR2(pts) {
@@ -249,10 +254,10 @@ function renderR2Pane(stepCount) {
             legend: {
                 x: 0.98,
                 y: 0.98,
-                xanchor: "right",
+                xanchor: "left",
                 yanchor: "top",
                 bgcolor: "rgba(255,255,255,0.65)"
-                    }
+            }
         },
         plotConfig
     );
@@ -271,6 +276,10 @@ function tickTowardsTarget() {
     }
 
     currentStep += currentStep < targetStep ? 1 : -1;
+
+    // Ensure we only generate new points when moving forward beyond known path
+    extendPrecomputedWalkTo(currentStep + 1);
+
     renderTimeEnsemble(currentStep);
 
     sliderTimer = setTimeout(tickTowardsTarget, stepDelayMs);
@@ -282,11 +291,9 @@ function setTargetStep(n) {
 }
 
 function initTimeEnsemble() {
-    lastSliderValue = 0;
-    lastDirection = 0;
     if (!window.Plotly || !walkDiv || !plotDiv || !stepSlider || !stepValue) return;
 
-    precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
+    precomputedWalk = buildPrecomputedWalk(0); // start with only origin
     currentStep = 0;
     targetStep = 0;
 
@@ -296,31 +303,20 @@ function initTimeEnsemble() {
     stepSlider.value = "0";
 
     stepSlider.oninput = (e) => {
-    const newVal = Number(e.target.value);
-    const direction = newVal > lastSliderValue ? 1 : (newVal < lastSliderValue ? -1 : 0);
-
-    if (direction !== 0 && lastDirection !== 0 && direction !== lastDirection) {
-        // direction changed -> generate a new walk
-        precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
-    }
-
-    lastDirection = direction;
-    lastSliderValue = newVal;
-    setTargetStep(newVal);
-};
+        const newVal = Number(e.target.value);
+        setTargetStep(newVal);
+    };
 
     renderTimeEnsemble(0);
 }
 
 function resetTimeEnsemble() {
-    lastSliderValue = 0;
-    lastDirection = 0;
     if (sliderTimer) {
         clearTimeout(sliderTimer);
         sliderTimer = null;
     }
 
-    precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
+    precomputedWalk = buildPrecomputedWalk(0); // reset to origin only
     currentStep = 0;
     targetStep = 0;
 
