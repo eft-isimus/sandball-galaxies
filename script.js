@@ -137,6 +137,8 @@ let precomputedWalk = [];
 let currentStep = 0;
 let targetStep = 0;
 let sliderTimer = null;
+let lastSliderValue = 0;
+let lastDirection = 0; // +1 forward, -1 backward, 0 none
 
 function computeOneStep(x, y) {
     const r = Math.random();
@@ -242,7 +244,15 @@ function renderR2Pane(stepCount) {
             height: H,
             margin: { t: 20, l: 40, r: 10, b: 40 },
             xaxis: { title: "N", range: [-5, 105] },
-            yaxis: { title: "R²(N)", range: [-5, 105] }
+            yaxis: { title: "R²(N)", range: [-5, 105] },
+            showlegend: true,
+            legend: {
+                x: 0.98,
+                y: 0.98,
+                xanchor: "right",
+                yanchor: "top",
+                bgcolor: "rgba(255,255,255,0.65)"
+                    }
         },
         plotConfig
     );
@@ -272,6 +282,8 @@ function setTargetStep(n) {
 }
 
 function initTimeEnsemble() {
+    lastSliderValue = 0;
+    lastDirection = 0;
     if (!window.Plotly || !walkDiv || !plotDiv || !stepSlider || !stepValue) return;
 
     precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
@@ -284,13 +296,25 @@ function initTimeEnsemble() {
     stepSlider.value = "0";
 
     stepSlider.oninput = (e) => {
-        setTargetStep(Number(e.target.value));
-    };
+    const newVal = Number(e.target.value);
+    const direction = newVal > lastSliderValue ? 1 : (newVal < lastSliderValue ? -1 : 0);
+
+    if (direction !== 0 && lastDirection !== 0 && direction !== lastDirection) {
+        // direction changed -> generate a new walk
+        precomputedWalk = buildPrecomputedWalk(maxSliderSteps);
+    }
+
+    lastDirection = direction;
+    lastSliderValue = newVal;
+    setTargetStep(newVal);
+};
 
     renderTimeEnsemble(0);
 }
 
 function resetTimeEnsemble() {
+    lastSliderValue = 0;
+    lastDirection = 0;
     if (sliderTimer) {
         clearTimeout(sliderTimer);
         sliderTimer = null;
