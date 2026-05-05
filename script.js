@@ -180,16 +180,38 @@ function computeR2(pts) {
 function renderWalkPane(stepCount) {
     const pts = precomputedWalk.slice(0, stepCount + 1);
 
-    const trace = stepCount === 0
-        ? []
-        : [{
-            x: pts.map(p => p.x),
-            y: pts.map(p => p.y),
-            mode: "lines+markers",
-            marker: { size: 3 },
-            line: { width: 2 },
-            name: "Walk"
-        }];
+    const trace = [
+    // full walk path (up to current step)
+    ...(stepCount === 0 ? [] : [{
+        x: pts.map(p => p.x),
+        y: pts.map(p => p.y),
+        mode: "lines+markers",
+        marker: { size: 3, color: "rgba(50,50,50,0.5)" },
+        line: { width: 2, color: "rgba(50,50,50,0.8)" },
+        name: "Walk",
+        showlegend: false
+    }]),
+
+    // static origin marker
+    {
+        x: [0],
+        y: [0],
+        mode: "markers",
+        marker: { size: 10, color: "green" },
+        name: "Origin",
+        showlegend: false
+    },
+
+    // current walker position marker
+    {
+        x: [pts[pts.length - 1].x],
+        y: [pts[pts.length - 1].y],
+        mode: "markers",
+        marker: { size: 10, color: "red" },
+        name: "Current Position",
+        showlegend: false
+    }
+];
 
     Plotly.react(
         "walkDiv",
