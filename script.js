@@ -11,18 +11,21 @@ const margin = 20;
 const dpr = window.devicePixelRatio || 1;
 const cssWidth = 200;
 const cssHeight = window.innerHeight - 2 * margin;
-const stepLength = 1;
 
-// --- right interactive walker ---
+// ==============================
+// RIGHT PANEL: SCROLL WALKER
+// ==============================
+const rightStepLength = 10; // restored independent step size for right panel
+
 const maxScroll = document.body.scrollHeight - window.innerHeight;
 const targetFraction = 2.5;
-const stepSizePx = (maxScroll * stepLength) / (targetFraction * cssHeight);
+const stepSizePx = (maxScroll * rightStepLength) / (targetFraction * cssHeight);
 
 const usableWidth = cssWidth - 2 * padding;
-const maxStepsX = Math.floor((usableWidth / 2) / stepLength);
-const centerX = Math.floor(cssWidth / 2 / stepLength) * stepLength;
-const minX = centerX - maxStepsX * stepLength;
-const maxX = centerX + maxStepsX * stepLength;
+const maxStepsX = Math.floor((usableWidth / 2) / rightStepLength);
+const centerX = Math.floor(cssWidth / 2 / rightStepLength) * rightStepLength;
+const minX = centerX - maxStepsX * rightStepLength;
+const maxX = centerX + maxStepsX * rightStepLength;
 
 if (canvas && ctx) {
     canvas.style.width = `${cssWidth}px`;
@@ -49,17 +52,17 @@ function addStep() {
     const r = Math.random();
 
     if (atTop) {
-        dy = stepLength;
+        dy = rightStepLength;
     } else if (atLeft) {
-        if (r < 0.5) dy = stepLength;
-        else dx = stepLength;
+        if (r < 0.5) dy = rightStepLength;
+        else dx = rightStepLength;
     } else if (atRight) {
-        if (r < 0.5) dy = stepLength;
-        else dx = -stepLength;
+        if (r < 0.5) dy = rightStepLength;
+        else dx = -rightStepLength;
     } else {
-        if (r < 0.33) dy = stepLength;
-        else if (r < 0.66) dx = stepLength;
-        else dx = -stepLength;
+        if (r < 0.33) dy = rightStepLength;
+        else if (r < 0.66) dx = rightStepLength;
+        else dx = -rightStepLength;
     }
 
     points.push({ x: last.x + dx, y: last.y + dy });
@@ -103,7 +106,9 @@ crabImg.onload = drawRightWalker;
 resetPoints();
 drawRightWalker();
 
-// --- tabs ---
+// ==============================
+// TABS
+// ==============================
 function showTab(id) {
     document.querySelectorAll(".tab-content").forEach(el => {
         el.style.display = "none";
@@ -118,8 +123,11 @@ function showTab(id) {
 }
 window.showTab = showTab;
 
-// --- time ensemble ---
+// ==============================
+// TIME ENSEMBLE (BOTTOM / TAB2)
+// ==============================
 const maxTimeSteps = 100;
+const timeStepLength = 1; // independent step size for time-ensemble walk
 const W = 300;
 const H = 300;
 const plotConfig = { displayModeBar: false, responsive: true };
@@ -130,10 +138,10 @@ function stepTimeWalk(pts) {
     const { x, y } = pts[pts.length - 1];
     const r = Math.random();
     pts.push(
-        r < 0.25 ? { x, y: y - stepLength } :
-        r < 0.5  ? { x, y: y + stepLength } :
-        r < 0.75 ? { x: x + stepLength, y } :
-                   { x: x - stepLength, y }
+        r < 0.25 ? { x, y: y - timeStepLength } :
+        r < 0.5  ? { x, y: y + timeStepLength } :
+        r < 0.75 ? { x: x + timeStepLength, y } :
+                   { x: x - timeStepLength, y }
     );
 }
 
@@ -187,15 +195,28 @@ function renderR2Pane(pts) {
         }
     }
 
+    const idealX = Array.from({ length: maxTimeSteps }, (_, i) => i + 1);
+    const idealY = idealX.map(n => n); // slope 1 line: R² = N
+
     Plotly.newPlot(
         "plotDiv",
-        [{
-            x: kVals,
-            y: rVals,
-            mode: "lines+markers",
-            marker: { size: 4 },
-            line: { width: 2 }
-        }],
+        [
+            {
+                x: kVals,
+                y: rVals,
+                mode: "lines+markers",
+                marker: { size: 4 },
+                line: { width: 2 },
+                name: "Simulated R²(N)"
+            },
+            {
+                x: idealX,
+                y: idealY,
+                mode: "lines",
+                line: { color: "rgba(255,0,0,0.7)", width: 2 },
+                name: "Ideal R²=N"
+            }
+        ],
         {
             width: W,
             height: H,
@@ -222,7 +243,6 @@ function animateWalkThenPlotR2() {
     const delayMs = 40;
     let stepsDone = 0;
 
-    // clear R² pane while walk animates
     Plotly.newPlot(
         "plotDiv",
         [],
@@ -239,10 +259,10 @@ function animateWalkThenPlotR2() {
     renderWalkPane(pts);
 
     function tick() {
-        if (token !== timeAnimationToken) return; // cancelled by reset
+        if (token !== timeAnimationToken) return;
 
         if (stepsDone >= maxTimeSteps) {
-            renderR2Pane(pts); // only once, after walk completes
+            renderR2Pane(pts);
             return;
         }
 
