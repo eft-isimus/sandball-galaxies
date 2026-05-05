@@ -197,7 +197,7 @@ function renderWalkPane(stepCount) {
         x: [0],
         y: [0],
         mode: "markers",
-        marker: { size: 10, color: "green" },
+        marker: { size: 5, color: "green" },
         name: "Origin",
         showlegend: false
     },
@@ -207,7 +207,7 @@ function renderWalkPane(stepCount) {
         x: [pts[pts.length - 1].x],
         y: [pts[pts.length - 1].y],
         mode: "markers",
-        marker: { size: 10, color: "red" },
+        marker: { size: 5, color: "red" },
         name: "Current Position",
         showlegend: false
     }
