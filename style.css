@@ -58,6 +58,8 @@ p {
     margin-top: 20px;
 }
 
-#walkCanvas, #plotCanvas {
+#walkDiv, #plotDiv {
     border: 1px solid #ccc;
+    width: 300px;
+    height: 300px;
 }
