@@ -28,6 +28,14 @@ body {
     top: 0;
     height: 100vh;
     padding-top: 20px;
+    justify-content: flex-end;  /* push canvas to right edge */
+}
+
+/* keep canvas aligned to right edge inside right panel */
+#canvas {
+    display: block;
+    margin-left: auto;
+    margin-right: 0;
 }
 
 /* Typography */
@@ -76,4 +84,20 @@ p {
 #stepSlider {
     width: 100%;
     max-width: 620px;
+}
+
+/* === DEBUG OUTLINES (set to 1 to show, 0 to hide) === */
+:root {
+    --debug-outline: 1px; /* change to 0 when done */
+}
+
+/* outlines for placement debugging */
+#left {
+    outline: var(--debug-outline) solid #000;
+    box-sizing: border-box;
+}
+
+#right {
+    outline: var(--debug-outline) solid #000;
+    box-sizing: border-box;
 }
