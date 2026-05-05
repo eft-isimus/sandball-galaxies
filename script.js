@@ -352,24 +352,25 @@ window.resetTimeEnsemble = resetTimeEnsemble;
 const particleWalkDiv = document.getElementById("particleWalkDiv");
 const particlePlotDiv = document.getElementById("particlePlotDiv");
 const addWalkBtn = document.getElementById("addWalkBtn");
+const add5WalkBtn = document.getElementById("add5WalkBtn");
+const resetParticleBtn = document.getElementById("resetParticleBtn");
 const particleCount = document.getElementById("particleCount");
 
-const particleMaxWalks = 50;
+const particleMaxWalks = 100;
 const particleSteps = 200;
 const particleStepLength = 1;
-const particleTotalRenderMs = 200; // 0.2 s total
-const particleStepDelayMs = particleTotalRenderMs / particleSteps; // 1 ms/step
+const particleTotalRenderMs = 200; // target: 0.2 s per walk
 const particleWalkRange = 25;
 
-// compact color pool (cycles)
 const particleColors = [
     "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd",
     "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
 ];
 
-// each entry: { fullPath, currentStep, color, done }
+// each walk: { fullPath, startMs, currentStep, done, color }
 let particleWalks = [];
-let particleTimer = null;
+let particleRAF = null;
+let particleNeedsRender = true;
 
 function particleOneStep(x, y) {
     const r = Math.random();
@@ -388,11 +389,7 @@ function buildParticleWalk() {
     return pts;
 }
 
-// plain MSD per walk endpoint, ensemble-averaged over currently added walks
 function computeParticleEnsembleR2() {
-    if (particleWalks.length === 0) return { x: [], y: [] };
-
-    // include only completed walks for ensemble curve stability
     const completed = particleWalks.filter(w => w.done);
     if (completed.length === 0) return { x: [], y: [] };
 
@@ -411,8 +408,6 @@ function computeParticleEnsembleR2() {
 }
 
 function renderParticleWalkPane() {
-    if (!particleWalkDiv || !window.Plotly) return;
-
     const traces = [];
 
     for (let i = 0; i < particleWalks.length; i++) {
@@ -440,7 +435,6 @@ function renderParticleWalkPane() {
         });
     }
 
-    // static origin
     traces.push({
         x: [0],
         y: [0],
@@ -464,15 +458,12 @@ function renderParticleWalkPane() {
 }
 
 function renderParticleR2Pane() {
-    if (!particlePlotDiv || !window.Plotly) return;
-
     const avg = computeParticleEnsembleR2();
-
     const idealX = Array.from({ length: particleSteps + 1 }, (_, i) => i); // 0..200
-    const idealY = idealX.map(n => n);
+    const idealY = idealX.map(v => v);
 
     const traces = [];
-    if (avg.x.length > 0) {
+    if (avg.x.length) {
         traces.push({
             x: avg.x,
             y: avg.y,
@@ -519,66 +510,104 @@ function renderParticleAll() {
     if (particleCount) particleCount.textContent = String(particleWalks.length);
 }
 
-function particleTick() {
-    let anyActive = false;
+function updateParticleButtons() {
+    const n = particleWalks.length;
+    const atMax = n >= particleMaxWalks;
+
+    if (addWalkBtn) addWalkBtn.disabled = atMax;
+    if (add5WalkBtn) add5WalkBtn.disabled = atMax;
+    if (resetParticleBtn) resetParticleBtn.disabled = n === 0;
+}
+
+function particleFrame(nowMs) {
+    let anyAnimating = false;
 
     for (const w of particleWalks) {
-        if (!w.done) {
-            anyActive = true;
-            w.currentStep += 1;
-            if (w.currentStep >= particleSteps) {
-                w.currentStep = particleSteps;
-                w.done = true;
-            }
+        if (w.done) continue;
+
+        const elapsed = nowMs - w.startMs;
+        const expectedStep = Math.min(
+            particleSteps,
+            Math.floor((elapsed / particleTotalRenderMs) * particleSteps)
+        );
+
+        if (expectedStep !== w.currentStep) {
+            w.currentStep = expectedStep;
+            particleNeedsRender = true;
+        }
+
+        if (w.currentStep >= particleSteps) {
+            w.currentStep = particleSteps;
+            w.done = true;
+            particleNeedsRender = true;
+        } else {
+            anyAnimating = true;
         }
     }
 
-    renderParticleAll();
-    updateAddButton();
+    if (particleNeedsRender) {
+        renderParticleAll();
+        updateParticleButtons();
+        particleNeedsRender = false;
+    }
 
-    if (anyActive) {
-        particleTimer = setTimeout(particleTick, particleStepDelayMs);
+    if (anyAnimating) {
+        particleRAF = requestAnimationFrame(particleFrame);
     } else {
-        particleTimer = null;
+        particleRAF = null;
     }
 }
 
-function ensureParticleTimerRunning() {
-    if (!particleTimer) particleTick();
+function ensureParticleLoop() {
+    if (!particleRAF) particleRAF = requestAnimationFrame(particleFrame);
 }
 
-function updateAddButton() {
-    if (!addWalkBtn) return;
-    addWalkBtn.disabled = particleWalks.length >= particleMaxWalks;
+function addNParticleWalks(n) {
+    const slots = particleMaxWalks - particleWalks.length;
+    const addCount = Math.max(0, Math.min(n, slots));
+    if (addCount === 0) return;
+
+    const now = performance.now();
+    for (let i = 0; i < addCount; i++) {
+        const idx = particleWalks.length;
+        particleWalks.push({
+            fullPath: buildParticleWalk(),
+            startMs: now,
+            currentStep: 0,
+            done: false,
+            color: particleColors[idx % particleColors.length]
+        });
+    }
+
+    particleNeedsRender = true;
+    updateParticleButtons();
+    ensureParticleLoop();
 }
 
-function addParticleWalk() {
-    if (particleWalks.length >= particleMaxWalks) return;
+function resetParticleEnsemble() {
+    if (particleRAF) {
+        cancelAnimationFrame(particleRAF);
+        particleRAF = null;
+    }
 
-    const idx = particleWalks.length;
-    particleWalks.push({
-        fullPath: buildParticleWalk(),
-        currentStep: 0,
-        done: false,
-        color: particleColors[idx % particleColors.length]
-    });
-
-    updateAddButton();
-    renderParticleAll();       // immediately show new walk origin/marker
-    ensureParticleTimerRunning(); // animate even if others are already animating
+    particleWalks = [];
+    particleNeedsRender = true;
+    renderParticleAll(); // leaves origin + ideal line
+    updateParticleButtons();
 }
 
 function initParticleEnsemble() {
-    if (!window.Plotly || !particleWalkDiv || !particlePlotDiv || !addWalkBtn) return;
+    if (!window.Plotly || !particleWalkDiv || !particlePlotDiv) return;
+
+    if (addWalkBtn) addWalkBtn.onclick = () => addNParticleWalks(1);
+    if (add5WalkBtn) add5WalkBtn.onclick = () => addNParticleWalks(5);
+    if (resetParticleBtn) resetParticleBtn.onclick = resetParticleEnsemble;
 
     if (particleWalks.length === 0) {
-        addParticleWalk(); // initial walk auto-start
+        addNParticleWalks(1);
     } else {
+        particleNeedsRender = true;
         renderParticleAll();
+        updateParticleButtons();
     }
-
-    addWalkBtn.onclick = addParticleWalk;
-    updateAddButton();
 }
-
-window.addEventListener("DOMContentLoaded", initParticleEnsemble);
