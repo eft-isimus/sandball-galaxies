@@ -1,15 +1,23 @@
 const plotDiv = document.getElementById("plotDiv");
 
-Plotly.newPlot(plotDiv, [{
-    x: [],
-    y: [],
-    mode: 'lines',
-    line: { width: 2 }
-}], {
-    margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: 'N' },
-    yaxis: { title: 'R²(N)' }
-}, { displayModeBar: false });
+
+function ensurePlotlyLoaded() {
+    if (window.Plotly) return Promise.resolve();
+
+    return new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.35.2/plotly.min.js";
+        script.onload = () => window.Plotly ? resolve() : reject(new Error("Plotly failed to initialize"));
+        script.onerror = () => reject(new Error("Plotly CDN load failed"));
+        document.head.appendChild(script);
+    });
+}
+
+function showPlotError(err) {
+    const msg = `Plot rendering failed: ${err.message}`;
+    if (walkDiv) walkDiv.textContent = msg;
+    if (plotDiv) plotDiv.textContent = msg;
+}
 
 const crabImg = new Image();
 crabImg.src = "crab.png"; // crab for walker :)
@@ -150,66 +158,52 @@ function showTab(id) {
     document.getElementById(id).style.display = 'block';
 }
 
-// --- TIME ENSEMBLE ---
+// --- TIME ENSEMBLE (STATIC PLOTS) ---
 
-const walkCanvas = document.getElementById("walkCanvas");
-const walkCtx = walkCanvas.getContext("2d");
-
-const plotCanvas = document.getElementById("plotCanvas");
-const plotCtx = plotCanvas.getContext("2d");
-
+const walkDiv = document.getElementById("walkDiv");
 const W = 300, H = 300, maxSteps = 100;
 
-walkCanvas.width = plotCanvas.width = W;
-walkCanvas.height = plotCanvas.height = H;
-
-let pts, step, running;
-
-// reset
-function resetTimeEnsemble() {
-    pts = [{ x: W / 2, y: H / 2 }];
-    step = 0;
-    running = true;
-    Plotly.react(plotDiv, [{
-    x: [],
-    y: []
-}], {
+const walkLayout = {
+    width: W,
+    height: H,
     margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: 'N' },
-    yaxis: { title: 'R²(N)' }
-}, { displayModeBar: false });
-    loop();
+    xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
+    yaxis: { title: "y" }
+};
+
+const plotLayout = {
+    width: W,
+    height: H,
+    margin: { t: 20, l: 40, r: 10, b: 40 },
+    xaxis: { title: "N" },
+    yaxis: { title: "R²(N)" }
+};
+
+const plotConfig = { displayModeBar: false, responsive: false };
+
+function generateWalk(nSteps) {
+    const pts = [{ x: 0, y: 0 }];
+    for (let i = 0; i < nSteps; i++) {
+        const { x, y } = pts[pts.length - 1];
+        const r = Math.random();
+        pts.push(
+            r < 0.25 ? { x, y: y - stepLength } :
+            r < 0.5  ? { x, y: y + stepLength } :
+            r < 0.75 ? { x: x + stepLength, y } :
+                       { x: x - stepLength, y }
+        );
+    }
+    return pts;
 }
 
-// random step
-function stepWalk() {
-    const { x, y } = pts[pts.length - 1];
-    const r = Math.random();
-    pts.push(
-        r < 0.25 ? { x, y: y - stepLength } :
-        r < 0.5  ? { x, y: y + stepLength } :
-        r < 0.75 ? { x: x + stepLength, y } :
-                   { x: x - stepLength, y }
-    );
-}
-
-// draw walk
-function drawWalk() {
-    walkCtx.clearRect(0, 0, W, H);
-    walkCtx.beginPath();
-    walkCtx.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach(p => walkCtx.lineTo(p.x, p.y));
-    walkCtx.stroke();
-}
-
-// compute R²
-function computeR2() {
-    const n = pts.length, R2 = [];
+function computeR2(points) {
+    const n = points.length;
+    const R2 = [];
     for (let k = 1; k < n; k++) {
         let s = 0;
         for (let t = 0; t < n - k; t++) {
-            const dx = pts[t + k].x - pts[t].x;
-            const dy = pts[t + k].y - pts[t].y;
+            const dx = points[t + k].x - points[t].x;
+            const dy = points[t + k].y - points[t].y;
             s += dx * dx + dy * dy;
         }
         R2[k] = s / (n - k);
@@ -217,11 +211,21 @@ function computeR2() {
     return R2;
 }
 
-// draw plot
-function drawPlot(R2) {
+async function renderStaticTimeEnsemble() {
+    await ensurePlotlyLoaded();
+    const pts = generateWalk(maxSteps);
+
+    Plotly.newPlot(walkDiv, [{
+        x: pts.map(p => p.x),
+        y: pts.map(p => p.y),
+        mode: "lines+markers",
+        marker: { size: 3 },
+        line: { width: 2 }
+    }], walkLayout, plotConfig);
+
+    const R2 = computeR2(pts);
     const x = [];
     const y = [];
-
     for (let k = 1; k < R2.length; k++) {
         if (R2[k] !== undefined) {
             x.push(k);
@@ -229,29 +233,17 @@ function drawPlot(R2) {
         }
     }
 
-    Plotly.react(plotDiv, [{
+    Plotly.newPlot(plotDiv, [{
         x: x,
         y: y,
-        mode: 'lines',
+        mode: "lines+markers",
+        marker: { size: 4 },
         line: { width: 2 }
-    }], {
-        margin: { t: 20, l: 40, r: 10, b: 40 },
-        xaxis: { title: 'N' },
-        yaxis: { title: 'R²(N)' }
-    }, { displayModeBar: false });
+    }], plotLayout, plotConfig);
 }
 
-// animation
-function loop() {
-    if (!running || step >= maxSteps) return;
-
-    stepWalk();
-    step++;
-
-    drawWalk();
-    drawPlot(computeR2());
-
-    setTimeout(loop, 40);
+function resetTimeEnsemble() {
+    renderStaticTimeEnsemble().catch(showPlotError);
 }
 
 // hook into tabs
