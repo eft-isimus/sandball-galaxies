@@ -11,7 +11,7 @@ const margin = 20;
 const dpr = window.devicePixelRatio || 1;
 const cssWidth = 200;
 const cssHeight = window.innerHeight - 2 * margin;
-const stepLength = 10;
+const stepLength = 1;
 
 // --- right interactive walker ---
 const maxScroll = document.body.scrollHeight - window.innerHeight;
@@ -168,8 +168,8 @@ function renderWalkPane(pts) {
             width: W,
             height: H,
             margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
-            yaxis: { title: "y" }
+            xaxis: { title: "x", range: [-25, 25], scaleanchor: "y", scaleratio: 1 },
+            yaxis: { title: "y", range: [-25, 25] }
         },
         plotConfig
     );
