@@ -111,7 +111,9 @@ function showTab(id) {
 
     const target = document.getElementById(id);
     if (target) target.style.display = "block";
-
+    if (id === "tab1") {
+        initParticleEnsemble();
+    }
     if (id === "tab2") {
         initTimeEnsemble();
     }
