@@ -1,15 +1,21 @@
 const plotDiv = document.getElementById("plotDiv");
-
-Plotly.newPlot(plotDiv, [{
-    x: [],
-    y: [],
-    mode: 'lines',
-    line: { width: 2 }
-}], {
+const plotLayout = {
+    width: 300,
+    height: 300,
     margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: 'N' },
-    yaxis: { title: 'R²(N)' }
-}, { displayModeBar: false });
+    xaxis: { title: "N" },
+    yaxis: { title: "R²(N)" }
+};
+const plotConfig = { displayModeBar: false, responsive: false };
+
+function renderTimePlot(x, y) {
+    Plotly.react(plotDiv, [{
+        x: x,
+        y: y,
+        mode: "lines",
+        line: { width: 2 }
+    }], plotLayout, plotConfig);
+}
 
 const crabImg = new Image();
 crabImg.src = "crab.png"; // crab for walker :)
@@ -167,14 +173,7 @@ function resetTimeEnsemble() {
     pts = [{ x: W / 2, y: H / 2 }];
     step = 0;
     running = true;
-    Plotly.react(plotDiv, [{
-    x: [],
-    y: []
-}], {
-    margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: 'N' },
-    yaxis: { title: 'R²(N)' }
-}, { displayModeBar: false });
+    renderTimePlot([], []);
     loop();
 }
 
@@ -226,16 +225,7 @@ function drawPlot(R2) {
         }
     }
 
-    Plotly.react(plotDiv, [{
-        x: x,
-        y: y,
-        mode: 'lines',
-        line: { width: 2 }
-    }], {
-        margin: { t: 20, l: 40, r: 10, b: 40 },
-        xaxis: { title: 'N' },
-        yaxis: { title: 'R²(N)' }
-    }, { displayModeBar: false });
+    renderTimePlot(x, y);
 }
 
 // animation
