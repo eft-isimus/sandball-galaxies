@@ -174,7 +174,17 @@
     <button onclick="showTab('tab2')">Time ensemble</button>
 </div>
 
-<div id="tab1" class="tab-content"> ...content 1... </div>
+<div id="tab1" class="tab-content"> 
+    <div id="particle-container">
+    <div id="particleWalkDiv"></div>
+    <div id="particlePlotDiv"></div>
+</div>
+
+<div id="particle-controls">
+    <button id="addWalkBtn">Add walk</button>
+    <span>Walks: <span id="particleCount">0</span>/50</span>
+</div>
+</div>
 
 <div id="tab2" class="tab-content" style="display:none;">
     <div id="time-container">
