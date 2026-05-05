@@ -177,35 +177,39 @@ function resetTimeEnsemble() {
     loop();
 }
 
-// random step
-function stepWalk() {
-    const { x, y } = pts[pts.length - 1];
-    const r = Math.random();
-    pts.push(
-        r < 0.25 ? { x, y: y - stepLength } :
-        r < 0.5  ? { x, y: y + stepLength } :
-        r < 0.75 ? { x: x + stepLength, y } :
-                   { x: x - stepLength, y }
-    );
+const plotLayout = {
+    width: W,
+    height: H,
+    margin: { t: 20, l: 40, r: 10, b: 40 },
+    xaxis: { title: "N" },
+    yaxis: { title: "R²(N)" }
+};
+
+const plotConfig = { displayModeBar: false, responsive: false };
+
+function generateWalk(nSteps) {
+    const pts = [{ x: 0, y: 0 }];
+    for (let i = 0; i < nSteps; i++) {
+        const { x, y } = pts[pts.length - 1];
+        const r = Math.random();
+        pts.push(
+            r < 0.25 ? { x, y: y - stepLength } :
+            r < 0.5  ? { x, y: y + stepLength } :
+            r < 0.75 ? { x: x + stepLength, y } :
+                       { x: x - stepLength, y }
+        );
+    }
+    return pts;
 }
 
-// draw walk
-function drawWalk() {
-    walkCtx.clearRect(0, 0, W, H);
-    walkCtx.beginPath();
-    walkCtx.moveTo(pts[0].x, pts[0].y);
-    pts.slice(1).forEach(p => walkCtx.lineTo(p.x, p.y));
-    walkCtx.stroke();
-}
-
-// compute R²
-function computeR2() {
-    const n = pts.length, R2 = [];
+function computeR2(points) {
+    const n = points.length;
+    const R2 = [];
     for (let k = 1; k < n; k++) {
         let s = 0;
         for (let t = 0; t < n - k; t++) {
-            const dx = pts[t + k].x - pts[t].x;
-            const dy = pts[t + k].y - pts[t].y;
+            const dx = points[t + k].x - points[t].x;
+            const dy = points[t + k].y - points[t].y;
             s += dx * dx + dy * dy;
         }
         R2[k] = s / (n - k);
@@ -213,11 +217,20 @@ function computeR2() {
     return R2;
 }
 
-// draw plot
-function drawPlot(R2) {
+function renderStaticTimeEnsemble() {
+    const pts = generateWalk(maxSteps);
+
+    Plotly.newPlot(walkDiv, [{
+        x: pts.map(p => p.x),
+        y: pts.map(p => p.y),
+        mode: "lines+markers",
+        marker: { size: 3 },
+        line: { width: 2 }
+    }], walkLayout, plotConfig);
+
+    const R2 = computeR2(pts);
     const x = [];
     const y = [];
-
     for (let k = 1; k < R2.length; k++) {
         if (R2[k] !== undefined) {
             x.push(k);
@@ -228,17 +241,8 @@ function drawPlot(R2) {
     renderTimePlot(x, y);
 }
 
-// animation
-function loop() {
-    if (!running || step >= maxSteps) return;
-
-    stepWalk();
-    step++;
-
-    drawWalk();
-    drawPlot(computeR2());
-
-    setTimeout(loop, 40);
+function resetTimeEnsemble() {
+    renderStaticTimeEnsemble();
 }
 
 // hook into tabs
