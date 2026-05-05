@@ -126,7 +126,7 @@ const maxSliderSteps = 200;
 const walkPlotRange = 25;
 const W = 300;
 const H = 300;
-const stepDelayMs = 30;
+const stepDelayMs = 12; // reduced from 30 -> faster stepping
 
 const plotConfig = { displayModeBar: false, responsive: true };
 
@@ -206,7 +206,7 @@ function renderWalkPane(stepCount) {
 }
 
 function renderR2Pane(stepCount) {
-    const idealX = Array.from({ length: 101 }, (_, i) => i); // 0..100
+    const idealX = Array.from({ length: 201 }, (_, i) => i); // 0..200
     const idealY = idealX.map(n => n);
 
     let simTrace = [];
@@ -252,7 +252,7 @@ function renderR2Pane(stepCount) {
             yaxis: { title: "R²(N)", range: [-5, 205] },
             showlegend: true,
             legend: {
-                x: 0.98,
+                x: 0.02,
                 y: 0.98,
                 xanchor: "left",
                 yanchor: "top",
@@ -276,10 +276,7 @@ function tickTowardsTarget() {
     }
 
     currentStep += currentStep < targetStep ? 1 : -1;
-
-    // Ensure we only generate new points when moving forward beyond known path
     extendPrecomputedWalkTo(currentStep + 1);
-
     renderTimeEnsemble(currentStep);
 
     sliderTimer = setTimeout(tickTowardsTarget, stepDelayMs);
@@ -293,7 +290,7 @@ function setTargetStep(n) {
 function initTimeEnsemble() {
     if (!window.Plotly || !walkDiv || !plotDiv || !stepSlider || !stepValue) return;
 
-    precomputedWalk = buildPrecomputedWalk(0); // start with only origin
+    precomputedWalk = buildPrecomputedWalk(0);
     currentStep = 0;
     targetStep = 0;
 
@@ -316,7 +313,7 @@ function resetTimeEnsemble() {
         sliderTimer = null;
     }
 
-    precomputedWalk = buildPrecomputedWalk(0); // reset to origin only
+    precomputedWalk = buildPrecomputedWalk(0);
     currentStep = 0;
     targetStep = 0;
 
