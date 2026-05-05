@@ -1,81 +1,49 @@
-const plotDiv = document.getElementById("plotDiv");
-const plotLayout = {
-    width: 300,
-    height: 300,
-    margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: "N" },
-    yaxis: { title: "R²(N)" }
-};
-const plotConfig = { displayModeBar: false, responsive: false };
-
-function renderTimePlot(x, y) {
-    Plotly.react(plotDiv, [{
-        x: x,
-        y: y,
-        mode: "lines",
-        line: { width: 2 }
-    }], plotLayout, plotConfig);
-}
-
-const crabImg = new Image();
-crabImg.src = "crab.png"; // crab for walker :)
-crabImg.onload = draw;
-
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
-const padding = 20; // pixels of empty space on left/right
+const plotDiv = document.getElementById("plotDiv");
+const walkDiv = document.getElementById("walkDiv");
 
-// --- High DPI (fix low resolution) ---
+const crabImg = new Image();
+crabImg.src = "crab.png";
+
+const padding = 20;
 const margin = 20;
 const dpr = window.devicePixelRatio || 1;
-
 const cssWidth = 200;
 const cssHeight = window.innerHeight - 2 * margin;
+const stepLength = 10;
 
-// parameters
-const stepLength = 10;   // fixed step length (grid spacing)
+// --- right interactive walker ---
 const maxScroll = document.body.scrollHeight - window.innerHeight;
-const targetFraction = 2.5; // want ~250% height max
+const targetFraction = 2.5;
 const stepSizePx = (maxScroll * stepLength) / (targetFraction * cssHeight);
 
-// to keep the walk restrained within the box
 const usableWidth = cssWidth - 2 * padding;
 const maxStepsX = Math.floor((usableWidth / 2) / stepLength);
 const centerX = Math.floor(cssWidth / 2 / stepLength) * stepLength;
 const minX = centerX - maxStepsX * stepLength;
 const maxX = centerX + maxStepsX * stepLength;
 
-canvas.style.width = cssWidth + "px";
-canvas.style.height = cssHeight + "px";
-
+canvas.style.width = `${cssWidth}px`;
+canvas.style.height = `${cssHeight}px`;
 canvas.width = cssWidth * dpr;
 canvas.height = cssHeight * dpr;
-
 ctx.scale(dpr, dpr);
 
-// --- Random walk storage ---
 let points = [];
 
-// initialize
 function resetPoints() {
-    points = [{
-        x: centerX,
-        y: 0
-    }];
+    points = [{ x: centerX, y: 0 }];
 }
-resetPoints();
 
-// --- Step function ---
 function addStep() {
     const last = points[points.length - 1];
-
     let dx = 0;
     let dy = 0;
 
     const atLeft = last.x <= minX;
     const atRight = last.x >= maxX;
     const atTop = last.y <= 0;
-
     const r = Math.random();
 
     if (atTop) {
@@ -92,106 +60,74 @@ function addStep() {
         else dx = -stepLength;
     }
 
-    points.push({
-        x: last.x + dx,
-        y: last.y + dy
-    });
+    points.push({ x: last.x + dx, y: last.y + dy });
 }
 
-// --- Draw ---
-function draw() {
+function drawRightWalker() {
     ctx.clearRect(0, 0, cssWidth, cssHeight);
+
+    if (!points.length) return;
 
     ctx.beginPath();
     ctx.moveTo(points[0].x, points[0].y);
-
     for (let i = 1; i < points.length; i++) {
         ctx.lineTo(points[i].x, points[i].y);
     }
-
     ctx.stroke();
+
+    if (!crabImg.complete) return;
+
     const last = points[points.length - 1];
-
-const size = 20;
-
-// move origin to crab position
-ctx.save();
-ctx.translate(last.x, last.y);
-
-// rotate (-90° = -π/2)
-ctx.rotate(-Math.PI / 2);
-
-// draw centered
-ctx.drawImage(
-    crabImg,
-    -size / 2,
-    -size / 2,
-    size,
-    size
-    );
+    const size = 20;
+    ctx.save();
+    ctx.translate(last.x, last.y);
+    ctx.rotate(-Math.PI / 2);
+    ctx.drawImage(crabImg, -size / 2, -size / 2, size, size);
     ctx.restore();
 }
 
-// --- Scroll handler ---
-window.addEventListener("scroll", function () {
-    const scrollTop = window.scrollY;
-    const stepsNeeded = Math.floor(scrollTop / stepSizePx);
+window.addEventListener("scroll", () => {
+    const stepsNeeded = Math.floor(window.scrollY / stepSizePx);
 
-    while (points.length - 1 < stepsNeeded) {
-        addStep();
-    }
+    while (points.length - 1 < stepsNeeded) addStep();
+    while (points.length - 1 > stepsNeeded) points.pop();
 
-    while (points.length - 1 > stepsNeeded) {
-        points.pop();
-    }
-
-    draw();
+    drawRightWalker();
 });
 
-// to control the tabs
+crabImg.onload = drawRightWalker;
+resetPoints();
+drawRightWalker();
+
+// --- tabs ---
 function showTab(id) {
-    document.querySelectorAll('.tab-content')
-        .forEach(el => el.style.display = 'none');
+    document.querySelectorAll(".tab-content").forEach(el => {
+        el.style.display = "none";
+    });
 
-    document.getElementById(id).style.display = 'block';
+    const target = document.getElementById(id);
+    if (target) target.style.display = "block";
+
+    if (id === "tab2") {
+        resetTimeEnsemble();
+    }
 }
 
-// --- TIME ENSEMBLE ---
+window.showTab = showTab;
 
-const walkCanvas = document.getElementById("walkCanvas");
-const walkCtx = walkCanvas.getContext("2d");
-
-const W = 300, H = 300, maxSteps = 100;
-
-walkCanvas.width = W;
-walkCanvas.height = H;
-
-let pts, step, running;
-
-// reset
-function resetTimeEnsemble() {
-    pts = [{ x: W / 2, y: H / 2 }];
-    step = 0;
-    running = true;
-    renderTimePlot([], []);
-    loop();
-}
-
-const plotLayout = {
-    width: W,
-    height: H,
-    margin: { t: 20, l: 40, r: 10, b: 40 },
-    xaxis: { title: "N" },
-    yaxis: { title: "R²(N)" }
-};
-
-const plotConfig = { displayModeBar: false, responsive: false };
+// --- time ensemble static plots ---
+const maxTimeSteps = 100;
+const W = 300;
+const H = 300;
+const plotConfig = { displayModeBar: false, responsive: true };
 
 function generateWalk(nSteps) {
     const pts = [{ x: 0, y: 0 }];
+
     for (let i = 0; i < nSteps; i++) {
         const { x, y } = pts[pts.length - 1];
         const r = Math.random();
+
         pts.push(
             r < 0.25 ? { x, y: y - stepLength } :
             r < 0.5  ? { x, y: y + stepLength } :
@@ -199,55 +135,89 @@ function generateWalk(nSteps) {
                        { x: x - stepLength, y }
         );
     }
+
     return pts;
 }
 
-function computeR2(points) {
-    const n = points.length;
-    const R2 = [];
+function computeR2(pts) {
+    const n = pts.length;
+    const out = [];
+
     for (let k = 1; k < n; k++) {
         let s = 0;
         for (let t = 0; t < n - k; t++) {
-            const dx = points[t + k].x - points[t].x;
-            const dy = points[t + k].y - points[t].y;
+            const dx = pts[t + k].x - pts[t].x;
+            const dy = pts[t + k].y - pts[t].y;
             s += dx * dx + dy * dy;
         }
-        R2[k] = s / (n - k);
+        out[k] = s / (n - k);
     }
-    return R2;
+
+    return out;
 }
 
 function renderStaticTimeEnsemble() {
-    const pts = generateWalk(maxSteps);
+    if (!window.Plotly) {
+        const msg = "Plotly failed to load.";
+        walkDiv.textContent = msg;
+        plotDiv.textContent = msg;
+        return;
+    }
 
-    Plotly.newPlot(walkDiv, [{
-        x: pts.map(p => p.x),
-        y: pts.map(p => p.y),
-        mode: "lines+markers",
-        marker: { size: 3 },
-        line: { width: 2 }
-    }], walkLayout, plotConfig);
+    const pts = generateWalk(maxTimeSteps);
 
-    const R2 = computeR2(pts);
-    const x = [];
-    const y = [];
-    for (let k = 1; k < R2.length; k++) {
-        if (R2[k] !== undefined) {
-            x.push(k);
-            y.push(R2[k]);
+    Plotly.newPlot(
+        walkDiv,
+        [{
+            x: pts.map(p => p.x),
+            y: pts.map(p => p.y),
+            mode: "lines+markers",
+            marker: { size: 3 },
+            line: { width: 2 }
+        }],
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
+            yaxis: { title: "y" }
+        },
+        plotConfig
+    );
+
+    const r2 = computeR2(pts);
+    const kVals = [];
+    const rVals = [];
+
+    for (let k = 1; k < r2.length; k++) {
+        if (r2[k] !== undefined) {
+            kVals.push(k);
+            rVals.push(r2[k]);
         }
     }
 
-    renderTimePlot(x, y);
+    Plotly.newPlot(
+        plotDiv,
+        [{
+            x: kVals,
+            y: rVals,
+            mode: "lines+markers",
+            marker: { size: 4 },
+            line: { width: 2 }
+        }],
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "N" },
+            yaxis: { title: "R²(N)" }
+        },
+        plotConfig
+    );
 }
 
 function resetTimeEnsemble() {
     renderStaticTimeEnsemble();
 }
 
-// hook into tabs
-const oldShowTab = showTab;
-showTab = function(id) {
-    oldShowTab(id);
-    if (id === "tab2") resetTimeEnsemble();
-};
+window.resetTimeEnsemble = resetTimeEnsemble;
