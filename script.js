@@ -116,31 +116,25 @@ function showTab(id) {
         resetTimeEnsemble();
     }
 }
-
 window.showTab = showTab;
 
-// --- time ensemble static plots ---
+// --- time ensemble ---
 const maxTimeSteps = 100;
 const W = 300;
 const H = 300;
 const plotConfig = { displayModeBar: false, responsive: true };
 
-function generateWalk(nSteps) {
-    const pts = [{ x: 0, y: 0 }];
+let timeAnimationToken = 0;
 
-    for (let i = 0; i < nSteps; i++) {
-        const { x, y } = pts[pts.length - 1];
-        const r = Math.random();
-
-        pts.push(
-            r < 0.25 ? { x, y: y - stepLength } :
-            r < 0.5  ? { x, y: y + stepLength } :
-            r < 0.75 ? { x: x + stepLength, y } :
-                       { x: x - stepLength, y }
-        );
-    }
-
-    return pts;
+function stepTimeWalk(pts) {
+    const { x, y } = pts[pts.length - 1];
+    const r = Math.random();
+    pts.push(
+        r < 0.25 ? { x, y: y - stepLength } :
+        r < 0.5  ? { x, y: y + stepLength } :
+        r < 0.75 ? { x: x + stepLength, y } :
+                   { x: x - stepLength, y }
+    );
 }
 
 function computeR2(pts) {
@@ -160,37 +154,28 @@ function computeR2(pts) {
     return out;
 }
 
-function renderStaticTimeEnsemble() {
-    if (!walkDiv || !plotDiv) {
-        console.error("Missing walkDiv or plotDiv in DOM.");
-        return;
-    }
+function renderWalkPane(pts) {
+    Plotly.newPlot(
+        "walkDiv",
+        [{
+            x: pts.map(p => p.x),
+            y: pts.map(p => p.y),
+            mode: "lines+markers",
+            marker: { size: 3 },
+            line: { width: 2 }
+        }],
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
+            yaxis: { title: "y" }
+        },
+        plotConfig
+    );
+}
 
-    if (!window.Plotly) {
-        const msg = "Plotly failed to load.";
-        walkDiv.textContent = msg;
-        plotDiv.textContent = msg;
-        return;
-    }
-
-    const pts = generateWalk(maxTimeSteps);
-
-    const walkData = [{
-        x: pts.map(p => p.x),
-        y: pts.map(p => p.y),
-        mode: "lines+markers",
-        marker: { size: 3 },
-        line: { width: 2 }
-    }];
-
-    const walkLayout = {
-        width: W,
-        height: H,
-        margin: { t: 20, l: 40, r: 10, b: 40 },
-        xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
-        yaxis: { title: "y" }
-    };
-
+function renderR2Pane(pts) {
     const r2 = computeR2(pts);
     const kVals = [];
     const rVals = [];
@@ -202,34 +187,76 @@ function renderStaticTimeEnsemble() {
         }
     }
 
-    const r2Data = [{
-        x: kVals,
-        y: rVals,
-        mode: "lines+markers",
-        marker: { size: 4 },
-        line: { width: 2 }
-    }];
+    Plotly.newPlot(
+        "plotDiv",
+        [{
+            x: kVals,
+            y: rVals,
+            mode: "lines+markers",
+            marker: { size: 4 },
+            line: { width: 2 }
+        }],
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "N" },
+            yaxis: { title: "R²(N)" }
+        },
+        plotConfig
+    );
+}
 
-    const r2Layout = {
-        width: W,
-        height: H,
-        margin: { t: 20, l: 40, r: 10, b: 40 },
-        xaxis: { title: "N" },
-        yaxis: { title: "R²(N)" }
-    };
+function animateWalkThenPlotR2() {
+    if (!walkDiv || !plotDiv) return;
 
-    try {
-        Plotly.newPlot("walkDiv", walkData, walkLayout, plotConfig);
-        Plotly.newPlot("plotDiv", r2Data, r2Layout, plotConfig);
-    } catch (err) {
-        console.error(err);
-        walkDiv.textContent = `Plot render error: ${err.message}`;
-        plotDiv.textContent = `Plot render error: ${err.message}`;
+    if (!window.Plotly) {
+        const msg = "Plotly failed to load.";
+        walkDiv.textContent = msg;
+        plotDiv.textContent = msg;
+        return;
     }
+
+    const token = ++timeAnimationToken;
+    const pts = [{ x: 0, y: 0 }];
+    const delayMs = 40;
+    let stepsDone = 0;
+
+    // clear R² pane while walk animates
+    Plotly.newPlot(
+        "plotDiv",
+        [],
+        {
+            width: W,
+            height: H,
+            margin: { t: 20, l: 40, r: 10, b: 40 },
+            xaxis: { title: "N" },
+            yaxis: { title: "R²(N)" }
+        },
+        plotConfig
+    );
+
+    renderWalkPane(pts);
+
+    function tick() {
+        if (token !== timeAnimationToken) return; // cancelled by reset
+
+        if (stepsDone >= maxTimeSteps) {
+            renderR2Pane(pts); // only once, after walk completes
+            return;
+        }
+
+        stepTimeWalk(pts);
+        stepsDone += 1;
+        renderWalkPane(pts);
+
+        setTimeout(tick, delayMs);
+    }
+
+    tick();
 }
 
 function resetTimeEnsemble() {
-    renderStaticTimeEnsemble();
+    animateWalkThenPlotR2();
 }
-
 window.resetTimeEnsemble = resetTimeEnsemble;
