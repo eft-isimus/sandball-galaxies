@@ -1,5 +1,5 @@
 const canvas = document.getElementById("canvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas ? canvas.getContext("2d") : null;
 const plotDiv = document.getElementById("plotDiv");
 const walkDiv = document.getElementById("walkDiv");
 
@@ -24,11 +24,13 @@ const centerX = Math.floor(cssWidth / 2 / stepLength) * stepLength;
 const minX = centerX - maxStepsX * stepLength;
 const maxX = centerX + maxStepsX * stepLength;
 
-canvas.style.width = `${cssWidth}px`;
-canvas.style.height = `${cssHeight}px`;
-canvas.width = cssWidth * dpr;
-canvas.height = cssHeight * dpr;
-ctx.scale(dpr, dpr);
+if (canvas && ctx) {
+    canvas.style.width = `${cssWidth}px`;
+    canvas.style.height = `${cssHeight}px`;
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    ctx.scale(dpr, dpr);
+}
 
 let points = [];
 
@@ -64,6 +66,8 @@ function addStep() {
 }
 
 function drawRightWalker() {
+    if (!ctx) return;
+
     ctx.clearRect(0, 0, cssWidth, cssHeight);
 
     if (!points.length) return;
@@ -157,6 +161,11 @@ function computeR2(pts) {
 }
 
 function renderStaticTimeEnsemble() {
+    if (!walkDiv || !plotDiv) {
+        console.error("Missing walkDiv or plotDiv in DOM.");
+        return;
+    }
+
     if (!window.Plotly) {
         const msg = "Plotly failed to load.";
         walkDiv.textContent = msg;
@@ -166,24 +175,21 @@ function renderStaticTimeEnsemble() {
 
     const pts = generateWalk(maxTimeSteps);
 
-    Plotly.newPlot(
-        walkDiv,
-        [{
-            x: pts.map(p => p.x),
-            y: pts.map(p => p.y),
-            mode: "lines+markers",
-            marker: { size: 3 },
-            line: { width: 2 }
-        }],
-        {
-            width: W,
-            height: H,
-            margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
-            yaxis: { title: "y" }
-        },
-        plotConfig
-    );
+    const walkData = [{
+        x: pts.map(p => p.x),
+        y: pts.map(p => p.y),
+        mode: "lines+markers",
+        marker: { size: 3 },
+        line: { width: 2 }
+    }];
+
+    const walkLayout = {
+        width: W,
+        height: H,
+        margin: { t: 20, l: 40, r: 10, b: 40 },
+        xaxis: { title: "x", scaleanchor: "y", scaleratio: 1 },
+        yaxis: { title: "y" }
+    };
 
     const r2 = computeR2(pts);
     const kVals = [];
@@ -196,24 +202,30 @@ function renderStaticTimeEnsemble() {
         }
     }
 
-    Plotly.newPlot(
-        plotDiv,
-        [{
-            x: kVals,
-            y: rVals,
-            mode: "lines+markers",
-            marker: { size: 4 },
-            line: { width: 2 }
-        }],
-        {
-            width: W,
-            height: H,
-            margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "N" },
-            yaxis: { title: "R²(N)" }
-        },
-        plotConfig
-    );
+    const r2Data = [{
+        x: kVals,
+        y: rVals,
+        mode: "lines+markers",
+        marker: { size: 4 },
+        line: { width: 2 }
+    }];
+
+    const r2Layout = {
+        width: W,
+        height: H,
+        margin: { t: 20, l: 40, r: 10, b: 40 },
+        xaxis: { title: "N" },
+        yaxis: { title: "R²(N)" }
+    };
+
+    try {
+        Plotly.newPlot("walkDiv", walkData, walkLayout, plotConfig);
+        Plotly.newPlot("plotDiv", r2Data, r2Layout, plotConfig);
+    } catch (err) {
+        console.error(err);
+        walkDiv.textContent = `Plot render error: ${err.message}`;
+        plotDiv.textContent = `Plot render error: ${err.message}`;
+    }
 }
 
 function resetTimeEnsemble() {
