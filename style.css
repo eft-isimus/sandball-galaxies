@@ -63,3 +63,17 @@ p {
     width: 300px;
     height: 300px;
 }
+
+#time-controls {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    width: 620px; /* ~300 + 20 gap + 300 */
+}
+
+#stepSlider {
+    width: 100%;
+    max-width: 620px;
+}
