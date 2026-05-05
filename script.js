@@ -243,8 +243,8 @@ function renderR2Pane(stepCount) {
             width: W,
             height: H,
             margin: { t: 20, l: 40, r: 10, b: 40 },
-            xaxis: { title: "N", range: [-5, 105] },
-            yaxis: { title: "R²(N)", range: [-5, 105] },
+            xaxis: { title: "N", range: [-5, 205] },
+            yaxis: { title: "R²(N)", range: [-5, 205] },
             showlegend: true,
             legend: {
                 x: 0.98,
