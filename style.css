@@ -128,3 +128,74 @@ p {
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+#lag-demo {
+    margin-top: 40px;
+}
+
+#lag-strip {
+    display: flex;
+    margin: 20px 0;
+}
+
+.lag-block {
+    width: 40px;
+    height: 40px;
+}
+
+.lag-block:nth-child(even) {
+    background: #a8c9ff;
+}
+
+.lag-block:nth-child(odd) {
+    background: #6fa8ff;
+}
+
+#lag-brackets {
+    position: relative;
+    margin-top: 10px;
+}
+
+/* each row (lag m) */
+.lag-row {
+    position: relative;
+    height: 30px;
+}
+
+/* bracket */
+.lag-bracket {
+    position: absolute;
+    height: 20px;
+    border-top: 2px solid #333;
+}
+
+.lag-bracket::before,
+.lag-bracket::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: 10px;
+    background: #333;
+}
+
+.lag-bracket::before {
+    left: 0;
+}
+
+.lag-bracket::after {
+    right: 0;
+}
+
+/* labels */
+.lag-label-left {
+    position: absolute;
+    left: -30px;
+    font-size: 12px;
+}
+
+.lag-label-right {
+    position: absolute;
+    right: -40px;
+    font-size: 12px;
+}
