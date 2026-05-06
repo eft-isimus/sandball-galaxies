@@ -652,12 +652,9 @@ function renderLagDemo(N) {
             const b = document.createElement("div");
             b.className = "lag-bracket";
             b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
-
-            const centerOffset = blockSize / 2;
-
-            const start = blockSize / 2; // center of first block
             
-            b.style.left = `${start}px`;
+            const start = blockSize / 2;
+            b.style.left = `${start + i * blockSize}px`;
             b.style.width = `${m * blockSize}px`;
 
             row.appendChild(b);
