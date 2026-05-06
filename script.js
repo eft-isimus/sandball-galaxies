@@ -652,8 +652,11 @@ function renderLagDemo(N) {
             const b = document.createElement("div");
             b.className = "lag-bracket";
 
-            b.style.left = `${i * blockSize}px`;
+            const centerOffset = blockSize / 2;
+
+            b.style.left = `${i * blockSize + centerOffset}px`;
             b.style.width = `${m * blockSize}px`;
+            b.style.transform = "translateX(-50%)";
 
             row.appendChild(b);
         }
