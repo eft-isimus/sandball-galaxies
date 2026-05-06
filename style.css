@@ -133,6 +133,60 @@ p {
     margin-top: 40px;
 }
 
+
+
+#lag-brackets {
+    position: relative;
+    margin-top: 10px;
+}
+
+/* each row (lag m) */
+.lag-row {
+    position: relative;
+    height: 30px;
+}
+
+/* bracket */
+.lag-bracket {
+    position: absolute;
+    height: 14px;
+    border: 2px solid #333;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    box-sizing: border-box;
+}
+
+/* .lag-bracket::before,
+.lag-bracket::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    width: 2px;
+    height: 10px;
+    background: #333;
+}
+
+.lag-bracket::before {
+    left: 0;
+}
+
+.lag-bracket::after {
+    right: 0;
+} */
+
+/* labels */
+.lag-label-left {
+    position: absolute;
+    left: -30px;
+    font-size: 12px;
+}
+
+.lag-label-right {
+    position: absolute;
+    right: -40px;
+    font-size: 12px;
+}
+
 #lag-strip {
     display: flex;
     margin: 20px 0;
@@ -149,53 +203,4 @@ p {
 
 .lag-block:nth-child(odd) {
     background: #6fa8ff;
-}
-
-#lag-brackets {
-    position: relative;
-    margin-top: 10px;
-}
-
-/* each row (lag m) */
-.lag-row {
-    position: relative;
-    height: 30px;
-}
-
-/* bracket */
-.lag-bracket {
-    position: absolute;
-    height: 20px;
-    border-top: 2px solid #333;
-}
-
-.lag-bracket::before,
-.lag-bracket::after {
-    content: "";
-    position: absolute;
-    top: -2px;
-    width: 2px;
-    height: 10px;
-    background: #333;
-}
-
-.lag-bracket::before {
-    left: 0;
-}
-
-.lag-bracket::after {
-    right: 0;
-}
-
-/* labels */
-.lag-label-left {
-    position: absolute;
-    left: -30px;
-    font-size: 12px;
-}
-
-.lag-label-right {
-    position: absolute;
-    right: -40px;
-    font-size: 12px;
 }
