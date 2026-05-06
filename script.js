@@ -651,12 +651,14 @@ function renderLagDemo(N) {
         for (let i = 0; i < N - m; i++) {
             const b = document.createElement("div");
             b.className = "lag-bracket";
+            b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
 
             const centerOffset = blockSize / 2;
 
-            b.style.left = `${i * blockSize + centerOffset}px`;
+            const start = blockSize / 2; // center of first block
+            
+            b.style.left = `${start}px`;
             b.style.width = `${m * blockSize}px`;
-            b.style.transform = "translateX(-50%)";
 
             row.appendChild(b);
         }
