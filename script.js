@@ -611,3 +611,70 @@ function initParticleEnsemble() {
         updateParticleButtons();
     }
 }
+
+// ==============================
+// LAG-TIME VISUALISATION
+// ==============================
+
+const lagStrip = document.getElementById("lag-strip");
+const lagBrackets = document.getElementById("lag-brackets");
+const lagSlider = document.getElementById("lagSlider");
+const lagNText = document.getElementById("lagN");
+
+const blockSize = 40;
+
+function renderLagDemo(N) {
+
+    // --- strip ---
+    lagStrip.innerHTML = "";
+    for (let i = 0; i < N; i++) {
+        const div = document.createElement("div");
+        div.className = "lag-block";
+        lagStrip.appendChild(div);
+    }
+
+    // --- brackets ---
+    lagBrackets.innerHTML = "";
+
+    for (let m = 1; m < N; m++) {
+
+        const row = document.createElement("div");
+        row.className = "lag-row";
+
+        // left label (lag m)
+        const leftLabel = document.createElement("div");
+        leftLabel.className = "lag-label-left";
+        leftLabel.textContent = m;
+        row.appendChild(leftLabel);
+
+        // brackets
+        for (let i = 0; i < N - m; i++) {
+            const b = document.createElement("div");
+            b.className = "lag-bracket";
+
+            b.style.left = `${i * blockSize}px`;
+            b.style.width = `${m * blockSize}px`;
+
+            row.appendChild(b);
+        }
+
+        // right label (count = N - m)
+        const rightLabel = document.createElement("div");
+        rightLabel.className = "lag-label-right";
+        rightLabel.textContent = N - m;
+        row.appendChild(rightLabel);
+
+        lagBrackets.appendChild(row);
+    }
+
+    lagNText.textContent = N;
+}
+
+// slider
+if (lagSlider) {
+    lagSlider.addEventListener("input", e => {
+        renderLagDemo(Number(e.target.value));
+    });
+
+    renderLagDemo(Number(lagSlider.value));
+}
