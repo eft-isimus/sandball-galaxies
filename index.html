@@ -168,64 +168,63 @@
 
 <h2>The need for sampling</h2>
 
-<div class="tab-box">
-<div class="tabs">
-    <button onclick="showTab('tab1')">Particle ensemble</button>
-    <button onclick="showTab('tab2')">Time ensemble</button>
-</div>
-
-<div id="tab1" class="tab-content"> 
-    <div id="particle-container">
-    <div id="particleWalkDiv"></div>
-    <div id="particlePlotDiv"></div>
-</div>
-
-<div id="particle-controls">
-    <button id="addWalkBtn">Add walk</button>
-    <button id="add5WalkBtn">Add 5 walks</button>
-    <button id="resetParticleBtn">Reset</button>
-    <span>Walks: <span id="particleCount">0</span>/50</span>
-</div>
-</div>
-
-<div id="tab2" class="tab-content" style="display:none;">
-    <div id="time-container">
-        <div id="walkDiv"></div>
-        <div id="plotDiv"></div>
-    </div>
-
-<div id="time-controls">
-    <label for="stepSlider">Steps: <span id="stepValue">0</span></label>
-    <input id="stepSlider" type="range" min="0" max="200" step="1" value="0">
-</div>
+    <div class="tab-box">
+        <div class="tabs">
+            <button onclick="showTab('tab1')">Particle ensemble</button>
+            <button onclick="showTab('tab2')">Time ensemble</button>
+        </div>
     
-    <button onclick="resetTimeEnsemble()">Reset</button>
-</div>
+        <div id="tab1" class="tab-content"> 
+            <div id="particle-container">
+                <div id="particleWalkDiv"></div>
+                <div id="particlePlotDiv"></div>
+            </div>
     
-</div>
+            <div id="particle-controls">
+                <button id="addWalkBtn">Add walk</button>
+                <button id="add5WalkBtn">Add 5 walks</button>
+                <button id="resetParticleBtn">Reset</button>
+                <span>Walks: <span id="particleCount">0</span>/50</span>
+            </div>
+        </div>
     
-</div>
+        <div id="tab2" class="tab-content" style="display:none;">
+            <div id="time-container">
+                <div id="walkDiv"></div>
+                <div id="plotDiv"></div>
+            </div>
+        
+        <div id="time-controls">
+            <label for="stepSlider">Steps: <span id="stepValue">0</span></label>
+            <input id="stepSlider" type="range" min="0" max="200" step="1" value="0">
+        </div>
+            
+            <button onclick="resetTimeEnsemble()">Reset</button>
+        </div>
 
-<!-- TIME-ENSEMBLE COMBINATORICS DEMO -->
-<div id="lag-demo">
-
-    <h3>Lag-time combinations</h3>
-
-    <!-- strip -->
-    <div id="lag-strip"></div>
-
-    <!-- brackets container -->
-    <div id="lag-brackets"></div>
-
-    <!-- slider -->
-    <div id="lag-controls">
-        <label>
-            Steps: <span id="lagN">3</span>
-        </label>
-        <input id="lagSlider" type="range" min="2" max="6" step="1" value="3">
-    </div>
-
-</div>    
+    </div>    
+    
+    <!-- TIME-ENSEMBLE COMBINATORICS DEMO -->
+    <div id="lag-demo">
+    
+        <h3>Lag-time combinations</h3>
+    
+        <!-- strip -->
+        <div id="lag-strip"></div>
+    
+        <!-- brackets container -->
+        <div id="lag-brackets"></div>
+    
+        <!-- slider -->
+        <div id="lag-controls">
+            <label>
+                Steps: <span id="lagN">3</span>
+            </label>
+            <input id="lagSlider" type="range" min="2" max="6" step="1" value="3">
+        </div>
+    
+    </div>   
+</div> 
     
 <!-- RIGHT CANVAS -->
 <div id="right">
