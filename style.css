@@ -129,50 +129,72 @@ p {
     cursor: not-allowed;
 }
 
+/*===================== LAG-TIME VISUALISATION =====================*/
 #lag-demo {
     margin-top: 40px;
 }
 
 #lag-brackets {
     position: relative;
-    margin-top: 30px;
-    margin-bottom: 30px;
+    margin-top: 18px;
+    margin-bottom: 18px;
 }
 
 /* row */
 .lag-row {
     position: relative;
-    height: 80px;
+    height: 120px;
 }
 
 /* bracket */
 .lag-bracket {
+
     position: absolute;
 
     height: 14px;
 
-    border: 2px solid #333;
+    border: 2px solid;
+
     border-bottom: none;
 
     border-radius: 8px 8px 0 0;
 
     box-sizing: border-box;
 
-    bottom: 50%;
-
     z-index: 1;
 }
 
-/* flipped brackets */
+/* TOP brackets */
+.lag-bracket:not(.lag-bracket-bottom) {
+
+    bottom: 62px;
+}
+
+/* BOTTOM brackets */
 .lag-bracket-bottom {
 
     transform: scaleY(-1);
 
-    top: 50%;
+    top: 62px;
 
-    bottom: auto;
+    z-index: 3;
+}
 
-    z-index: 2;
+/* alternating vertical offset */
+.offset-bracket {
+
+    margin-top: -4px;
+}
+
+/* colors */
+.lag-black {
+    border-color: black;
+    z-index: 1;
+}
+
+.lag-brown {
+    border-color: brown;
+    z-index: 5;
 }
 
 /* labels */
@@ -209,7 +231,7 @@ p {
 
     display: flex;
 
-    margin: 10px 0 25px 0;
+    margin: 0;
 }
 
 .lag-block {
