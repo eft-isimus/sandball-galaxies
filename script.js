@@ -669,6 +669,12 @@ function renderLagDemo(N, M) {
     leftLabel.textContent = M;
     row.appendChild(leftLabel);
 
+    // right label
+    const rightLabel = document.createElement("div");
+    rightLabel.className = "lag-label-right";
+    rightLabel.textContent = N - M;
+    row.appendChild(rightLabel);
+
     // brackets
     for (let i = 0; i < N - M; i++) {
 
@@ -676,14 +682,23 @@ function renderLagDemo(N, M) {
         b.className = "lag-bracket";
 
         // alternating colors
-        b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
+        if (i % 2 === 0) {
+            b.classList.add("lag-black");
+        } else {
+            b.classList.add("lag-brown");
+        }
 
         // alternating orientation
         if (i % 2 === 1) {
             b.classList.add("lag-bracket-bottom");
         }
 
-        // align with block centers
+        // small vertical offset for odd-numbered brackets
+        if (i % 2 === 1) {
+            b.classList.add("offset-bracket");
+        }
+
+        // align to block centers
         const start = blockSize / 2;
 
         b.style.left = `${start + i * blockSize}px`;
@@ -691,12 +706,6 @@ function renderLagDemo(N, M) {
 
         row.appendChild(b);
     }
-
-    // right label
-    const rightLabel = document.createElement("div");
-    rightLabel.className = "lag-label-right";
-    rightLabel.textContent = N - M;
-    row.appendChild(rightLabel);
 
     lagBrackets.appendChild(row);
 }
