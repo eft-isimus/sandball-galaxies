@@ -627,7 +627,7 @@ function renderLagDemo(N) {
 
     // --- strip ---
     lagStrip.innerHTML = "";
-    for (let i = 0; i < N; i++) {
+    for (let i = N; i > 1; i--) {
         const div = document.createElement("div");
         div.className = "lag-block";
         lagStrip.appendChild(div);
@@ -651,6 +651,9 @@ function renderLagDemo(N) {
         for (let i = 0; i < N - m; i++) {
             const b = document.createElement("div");
             b.className = "lag-bracket";
+            if (i % 2 === 1) {
+                            b.classList.add("offset-bracket");
+                        }
             b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
             
             const start = blockSize / 2;
