@@ -618,103 +618,68 @@ function initParticleEnsemble() {
 
 const lagStrip = document.getElementById("lag-strip");
 const lagBrackets = document.getElementById("lag-brackets");
-
 const lagSlider = document.getElementById("lagSlider");
-const lagTimeSlider = document.getElementById("lagTimeSlider");
-
 const lagNText = document.getElementById("lagN");
-const lagMText = document.getElementById("lagM");
 
 const blockSize = 40;
 
-function renderLagDemo(N, M) {
+function renderLagDemo(N) {
 
-    // update labels
-    lagNText.textContent = N;
-    lagMText.textContent = M;
-
-    // keep lag-time slider valid
-    lagTimeSlider.max = N - 1;
-
-    if (Number(lagTimeSlider.value) > N - 1) {
-        lagTimeSlider.value = N - 1;
-        M = N - 1;
-        lagMText.textContent = M;
-    }
-
-    // =========================
-    // STRIP
-    // =========================
-
+    // --- strip ---
     lagStrip.innerHTML = "";
-
-    for (let i = 0; i < N; i++) {
+    for (let i = N; i > 1; i--) {
         const div = document.createElement("div");
         div.className = "lag-block";
         lagStrip.appendChild(div);
     }
 
-    // =========================
-    // BRACKETS
-    // =========================
-
+    // --- brackets ---
     lagBrackets.innerHTML = "";
 
-    const row = document.createElement("div");
-    row.className = "lag-row";
+    for (let m = 1; m < N; m++) {
 
-    // left label
-    const leftLabel = document.createElement("div");
-    leftLabel.className = "lag-label-left";
-    leftLabel.textContent = M;
-    row.appendChild(leftLabel);
+        const row = document.createElement("div");
+        row.className = "lag-row";
 
-    // brackets
-    for (let i = 0; i < N - M; i++) {
+        // left label (lag m)
+        const leftLabel = document.createElement("div");
+        leftLabel.className = "lag-label-left";
+        leftLabel.textContent = m;
+        row.appendChild(leftLabel);
 
-        const b = document.createElement("div");
-        b.className = "lag-bracket";
+        // brackets
+        for (let i = 0; i < N - m; i++) {
+            const b = document.createElement("div");
+            b.className = "lag-bracket";
+            if (i % 2 === 1) {
+                            b.classList.add("offset-bracket");
+                        }
+            b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
+            
+            const start = blockSize / 2;
+            b.style.left = `${start + i * blockSize}px`;
+            b.style.width = `${m * blockSize}px`;
 
-        // alternating colors
-        b.style.borderColor = (i % 2 === 0) ? "black" : "brown";
-
-        // alternating orientation
-        if (i % 2 === 1) {
-            b.classList.add("lag-bracket-bottom");
+            row.appendChild(b);
         }
 
-        // align with block centers
-        const start = blockSize / 2;
+        // right label (count = N - m)
+        const rightLabel = document.createElement("div");
+        rightLabel.className = "lag-label-right";
+        rightLabel.textContent = N - m;
+        row.appendChild(rightLabel);
 
-        b.style.left = `${start + i * blockSize}px`;
-        b.style.width = `${M * blockSize}px`;
-
-        row.appendChild(b);
+        lagBrackets.appendChild(row);
     }
 
-    // right label
-    const rightLabel = document.createElement("div");
-    rightLabel.className = "lag-label-right";
-    rightLabel.textContent = N - M;
-    row.appendChild(rightLabel);
-
-    lagBrackets.appendChild(row);
+    lagNText.textContent = N;
 }
 
-function updateLagDemo() {
+// slider
+if (lagSlider) {
+    lagSlider.addEventListener("input", e => {
+        renderLagDemo(Number(e.target.value));
+    });
 
-    const N = Number(lagSlider.value);
-    const M = Number(lagTimeSlider.value);
-
-    renderLagDemo(N, M);
-}
-
-// sliders
-if (lagSlider && lagTimeSlider) {
-
-    lagSlider.addEventListener("input", updateLagDemo);
-
-    lagTimeSlider.addEventListener("input", updateLagDemo);
-
-    updateLagDemo();
+    renderLagDemo(Number(lagSlider.value));
 }
